@@ -58,16 +58,16 @@ public class Robust {
                 p.setdelta(delta); // delta set constant
             }
             p.setabratio(abratio);
-            p.setfraction_size(fraction_size);
-            p.setcumul_dose(cumul_dose);
-            p.setmin_dose(cumul_dose);
-            p.setdata(patientdata);
+            p.setFractionSize(fraction_size);
+            p.setCumulDose(cumul_dose);
+            p.setMinDose(cumul_dose);
+            p.setData(patientdata);
             p.setlambda(lambda);
 
             double expterm = Math.exp(p.getlambda() * (middletime - starttime));
             double psi = (startvol * expterm - middlevol) /
                     (middlevol * (expterm - 1));
-            p.setpsi(psi);
+            p.setPSI(psi);
             allpts.add(p);
         }
         lambda_evol(allpts, datastore, direct, indirect, hour, selection, trialnum, evol, randint);
@@ -118,26 +118,26 @@ public class Robust {
         double error = 0;
 
         // randomly select a patient to exclude
-        Patient randomNum = allpts.get(randnum.nextInt((allpts.size() / allpts.get(0).getdata().size()) + 1));
+        Patient randomNum = allpts.get(randnum.nextInt((allpts.size() / allpts.get(0).getData().size()) + 1));
 
         for (Patient allpt : allpts) {
             if (allpt == randomNum) // leave one out
                 continue;
 
-            double starttime = allpt.getdata().get(0).get(0);
-            double middletime = allpt.getdata().get(0).get(1);
-            double endtime = allpt.getdata().get(0).get(allpt.getdata().get(0).size() - 1);
+            double starttime = allpt.getData().get(0).get(0);
+            double middletime = allpt.getData().get(0).get(1);
+            double endtime = allpt.getData().get(0).get(allpt.getData().get(0).size() - 1);
 
-            double startvol = allpt.getdata().get(1).get(0);
-            double middlevol = allpt.getdata().get(1).get(1);
-            double endvol = allpt.getdata().get(1).get(allpt.getdata().get(1).size() - 1);
+            double startvol = allpt.getData().get(1).get(0);
+            double middlevol = allpt.getData().get(1).get(1);
+            double endvol = allpt.getData().get(1).get(allpt.getData().get(1).size() - 1);
 
             double expterm = Math.exp(lambda * (middletime - starttime));
             psi = (startvol * expterm - middlevol) / (middlevol * (expterm - 1)); // calculate psi based on first two points
 
             k = startvol / psi; // calculate k based on psi
 
-            double gamma = 1 - Math.exp(-allpt.getalpha() * allpt.getfraction_size() - (allpt.getalpha() / allpt.getabratio()) * Math.pow(allpt.getfraction_size(), 2));
+            double gamma = 1 - Math.exp(-allpt.getalpha() * allpt.getFractionSize() - (allpt.getalpha() / allpt.getabratio()) * Math.pow(allpt.getFractionSize(), 2));
 
             double A1 = (k / startvol) - 1;
             double start = k / (1 + A1 * Math.exp(-lambda * (middletime - starttime))); // tracks projected volume at second time point
@@ -146,7 +146,7 @@ public class Robust {
             double t = middletime; // simulate tumor volume reduction after initial growth period (time point 1 to time point 2)
             int numdoses = 0;
             double delta_t = 1.0 / 24.0; // time step
-            while (t < endtime && numdoses < allpt.getcumul_dose() / allpt.getfraction_size()) // while time is less than end or maximum number of doses reached
+            while (t < endtime && numdoses < allpt.getCumulDose() / allpt.getFractionSize()) // while time is less than end or maximum number of doses reached
             {
                 t += delta_t;
                 double weekend = (int) (t / delta_t) % (7 / delta_t);
@@ -236,7 +236,7 @@ public class Robust {
     int numdoses = 0;
     int hour = 6;
 
-    while (numdoses <= allpt.getcumul_dose() / allpt.getfraction_size())
+    while (numdoses <= allpt.getCumulDose() / allpt.getFractionSize())
     {
         t += 1.0/24.0;
         int weekend = (int)(t * 24) % (7 * 24);

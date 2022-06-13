@@ -12,7 +12,7 @@ public class In_Silico {
     static public double next(Random rnd, double median, double q1, double q3, double min, double max)
     {
         double d = -3;
-        while (d > 2.698 || d < -2.698) {
+        while (d > 2.698 || d < -2.698) { // excludes values outside of range
             d = rnd.nextGaussian();
         }
         if (Math.abs(d) < 0.6745) {
@@ -38,11 +38,6 @@ public class In_Silico {
         double fraction_size = 2; // d
 
         int scale = (int) Math.pow(10, 1);
-        //ArrayList<Double> frac_size = new ArrayList<>();
-        //for (double i = 0.1; i <= 30; i += 0.1)
-        //{
-            //frac_size.add(i);
-        //}
 
         double abratio = 10;
         double mu = 1.0;
@@ -122,10 +117,10 @@ public class In_Silico {
                 p.setlambda(lambda);
                 p.setalpha(alpha);
                 p.setdelta(delta);
-                p.setpsi(psi);
-                p.setdata(data);
+                p.setPSI(psi);
+                p.setData(data);
                 p.setmu(mu);
-                p.setfraction_size(fraction_size);
+                p.setFractionSize(fraction_size);
                 allpts.add(p);
                 i++;
             }
@@ -182,7 +177,7 @@ public class In_Silico {
         Random r = new Random();
 
         for (Patient p : allpts) {
-            if (p.getExceeds_one())
+            if (p.getExceedsOne())
                 check_true++;
             else
                 check_false++;
@@ -217,12 +212,12 @@ public class In_Silico {
             }
 
             for (Patient p : allpts) {
-                if (p.getExceeds_one())
+                if (p.getExceedsOne())
                 {
                     if (a * p.getlambda() + b * p.getalpha() + c * p.getdelta() + d > 0)
                         above++; // PSI > 1
                 }
-                if (!p.getExceeds_one())
+                if (!p.getExceedsOne())
                 {
                     if (a * p.getlambda() + b * p.getalpha() + c * p.getdelta() + d < 0)
                         below++; // this is the case where PSI <= 1
@@ -318,161 +313,13 @@ public class In_Silico {
                     p.setlambda(lambda);
                     p.setalpha(alpha);
                     p.setdelta(delta);
-                    p.setpsi(psi);
-                    p.setdata(data);
+                    p.setPSI(psi);
+                    p.setData(data);
                     p.setmu(mu);
-                    p.setfraction_size(fraction_size);
+                    p.setFractionSize(fraction_size);
                     allpts.add(p);
                 }
             }
         return allpts;
     }
 }
-
-    /*if (indirect)
-    {
-        k *= (1 - allpts.get(i).getdelta()); // indirect cell kill
-    }
-    if (direct)
-    {
-        end = -gamma * end * (1 - Math.pow(end / k, allpts.get(i).getmu())); // used in ARO paper - direct cell kill, added a negative sign in front of gamma
-    }
-
-    */
-
-    /*for(double t = middletime + allpts.get(i).getfraction_freq() / 24.0; t <= endtime; t += allpts.get(i).getfraction_freq() / 24.0)
-    {
-        if (nearZero(t - (int)t, Math.pow(10,-14)))
-        {
-            k = k * (1 - allpts.get(i).getdelta()); // indirect cell kill
-            end *= gamma * (1 - Math.pow(end/k, allpts.get(i).getmu())); // used in ARO paper
-        }
-
-        A1 = Math.pow((k / end), allpts.get(i).getmu()) - 1; //original function
-        end = k / Math.pow((1 + A1 * Math.exp(-lambda * allpts.get(i).getmu() * t)), 1/allpts.get(i).getmu()); // essential - tracks volume at tp1, original function
-    }*//*
-
-    double t = allpts.get(i).getfraction_freq();
-    int numdoses = 0;
-    int hour = 0;
-    while (numdoses <= allpts.get(i).getcumul_dose() / allpts.get(i).getfraction_size())
-    {
-        t += 1.0/24.0;
-        if (!(120 <= (t * 24 % (7 * 24)) && (t * 24 % (7 * 24)) <= 168)) // if not weekend
-        {
-            if (nearZero((t * 24 - hour) % 24, Math.pow(10, -5))) // everyday at 6 am
-            {
-                if (indirect)
-                {
-                    k *= (1 - allpts.get(i).getdelta()); // indirect cell kill
-                }
-                if (direct)
-                {
-                    end = -gamma * end * (1 - Math.pow(end / k, allpts.get(i).getmu())); // used in ARO paper - direct cell kill, added a negative sign in front of gamma
-                }
-                numdoses++;
-            }
-        }
-        end = k / Math.pow(1 + (Math.pow((k / end), allpts.get(i).getmu()) - 1) * Math.exp(-lambda * allpts.get(i).getmu() *
-                (1.0 / 24.0)), 1 / allpts.get(i).getmu()); //original function
-    }*/
-
-    /*public static double Plane_Error(ArrayList<Patient> allpts, double[] coeff, double bound, double check_true, double check_false) {
-        int above = 0;
-        int below = 0;
-        int count = 0;
-        double a = coeff[0];
-        double b = coeff[1];
-        double c = coeff[2];
-        double d = coeff[3];
-
-        for (Patient p : allpts) {
-            if (p.getExceeds_one())
-                if (a * p.getlambda() + b * p.getalpha() + c * p.getdelta() + d > 0)
-                    above++;
-                else if (a * p.getlambda() + b * p.getalpha() + c * p.getdelta() + d < 0)
-                    below++;
-        }
-        if ((double) above / check_true > bound && (double) below / check_false > bound)
-            count++;
-        return count / (check_true + check_false);
-    }*/
-
-
-/*
-    public static ArrayList<Patient> Generic_Patient_PSI(int numpatients, double lambda, boolean direct, boolean indirect) {
-        ArrayList<Patient> allpts = new ArrayList<>();
-        Random r = new Random();
-
-        double fraction_size = 2; // d
-        double abratio = 10;
-        double cumul_dose = 68.0; // D
-        double fraction_freq = 1;
-        int[] hour = new int[]{6};
-
-        int i = 0;
-        while (i != numpatients) {
-            double alpha = r.nextDouble() * 0.2;
-            double delta = r.nextDouble() * 0.2;
-            lambda = r.nextDouble() * 0.3;
-            double psi = 0.75;
-
-            double gamma = 1 - Math.exp(-alpha * fraction_size - (alpha / abratio) * Math.pow(fraction_size, 2));
-
-            double v0 = 100;
-            double k = v0 / psi;
-
-            double end = k / (1 + ((k / v0) - 1) * Math.exp(-lambda * fraction_freq));
-            boolean psi_check = PSICheck(k, end, lambda, gamma, delta, fraction_freq, fraction_size, cumul_dose, indirect, direct, hour);
-
-            if (!psi_check)
-            {
-                Patient p = new Patient();
-                p.setlambda(lambda);
-                p.setalpha(alpha);
-                p.setdelta(delta);
-                p.setExceeds_one(psi_check);
-                p.setpsi(psi);
-                allpts.add(p);
-                i++;
-                if (i % (numpatients / 10) == 0)
-                    System.out.println("Completed: " + i);
-            }
-        }
-        return allpts;
-    }
-
-    public static boolean PSICheck(double k, double end, double lambda, double gamma, double delta, double fraction_freq, double fraction_size, double cumul_dose, boolean indirect, boolean direct, int[] hour) {
-        boolean psi_check = false;
-        double t = 0;
-        int numdoses = 0;
-        double delta_t = 1.0 / 24.0;
-        int h = hour[0];
-        double maxtime = 8 * 7;
-
-        while (t < maxtime && numdoses <= cumul_dose / fraction_size) {
-            t += delta_t;
-            int weekend = (int) (t * 24) % (7 * 24);
-
-            if (weekend <= 120) { // if not weekend
-                if (((int) (t * 24) - h) % 24 == 0) // everyday at h hour
-                {
-                    if (direct) {
-                        end -= gamma * end * (1 - (end / k)); //direct cell kill
-                    }
-                    if (indirect) {
-                        k *= (1 - delta); //indirect cell kill
-                    }
-                    if (direct || indirect)
-                        numdoses++;
-                }
-            }
-            end = k / (1 + ((k / end) - 1) * Math.exp(-lambda * delta_t));
-
-            if (end / k > 1) {
-                psi_check = true;
-                break;
-            }
-        }
-        return psi_check;
-    }*/

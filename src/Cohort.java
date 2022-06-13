@@ -2,12 +2,13 @@ import java.util.Comparator;
 
 public class Cohort {
 
-    private final double lambda;
-    private double maxtruetotal;
-    private double error;
-    private double sensitivity;
-    private double specificity;
+    private final double lambda; // lambda is the proposed growth rate
+    private double maxtruetotal; // True Total is the J statistic (sensitivity + specificity - 1)
+    private double error; // Stores the RMSE
+    private double sensitivity; // Sensitivity = True Positive / (True Positive + False Negative)
+    private double specificity; // Specificity = True Negative / (True Negative + False Positive)
 
+    // Constructor function to initialize a cohort of patients
     public Cohort(double lambda, double sensitivity, double specificity, double error) {
         this.lambda = lambda;
         this.maxtruetotal = sensitivity + specificity - 1;
@@ -38,8 +39,10 @@ public class Cohort {
 
     public void seterror ( double error ) { this.error = error; }
 
+    // Sort based on J statistic
     public static final Comparator<Cohort> TTSort = Comparator.comparingDouble(Cohort::getMaxtruetotal);
 
+    // Sort based on RMSE value
     public static final Comparator<Cohort> ErrorSort = Comparator.comparingDouble(Cohort::geterror);
 
 // --Commented out by Inspection START (6/14/2021 2:35 PM):
