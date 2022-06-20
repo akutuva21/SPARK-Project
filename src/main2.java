@@ -25,24 +25,39 @@ public class main2 {
 
     public static void main(String[] args) throws Exception {
         Scanner in = new Scanner(System.in);
-        final int seed = 7;
+        final int seed = 7; // random seed value set
         Random randint = new Random(seed); // declare a random object with seed
+
+        /* Signify default number of trials / evolutions / patients */
+        // boolean d = true; // boolean for default parameters
         int trialnum = 100; // number of trials/sets of cohorts
         int evol = 1000; // number of evolutions (if robustness is used)
         int num_patients = 10000; // default number of in-silico patients to be used
+        double lambda;
+
+        /* Signify times of treatment */
         ArrayList<Double> hour = new ArrayList<>(); // hour of treatment (current set at 6 am)
         hour.add(6.0); // 6 AM treatment
+
+        int selection = 1; // boolean/int for whether to sort robustness by RMSE/J statistic
+        ArrayList<Cohort> datastore = new ArrayList<>(); // stores lambda/alpha/J statistic
+        //double[] vals; // stores J Statistic and RMSE for each patient
+
+        boolean pretreat = false; // signifies whether an early growth period is used
+
         boolean direct = true; // boolean for direct cell kill
         boolean indirect = !true; // boolean for indirect cell kill
-        boolean d; // boolean for default parameters
-        int selection = 1; // boolean/int for whether to sort robustness by error/J
-        boolean robust_test; // whether robustness is to be used
-        ArrayList<Cohort> datastore = new ArrayList<>(); // stores lambda/alpha/J statistic
-        //double[] vals; // stores J Statistic and error for each patient
+
+        /* modes of testing */
+        boolean robust_test = false; // whether robustness is to be used
+        boolean spawn_random_pts = false;
+        boolean random_selection = false;
+        boolean grid_search = true;
 
         ArrayList<Patient> allpts = new ArrayList<>(); // creates a blank arraylist (vector) of patient objects
 
-        System.out.println("Default? (True / False)");
+        // Below lines are useful for potential terminal boolean implementation
+       /* System.out.println("Default? (True / False)");
         String def = in.nextLine();
         while (!def.equalsIgnoreCase("true") && !def.equalsIgnoreCase("false")) {
             System.out.println("Try again.");
@@ -70,6 +85,7 @@ public class main2 {
             System.out.println("Robustness Testing: There are " + trialnum + " total trials with " + evol +
                     " evolutions on each trial.");
         }
+
         if (!robust_test) // if not doing robustness testing
         {
             if (!d) {
@@ -80,7 +96,8 @@ public class main2 {
             }
             System.out.println("Enter the Number of Patients: ");
             num_patients = in.nextInt(); // Enter the number of patients tested
-        }
+        }*/
+
         if (direct && !indirect)
             System.out.print("Direct = True, Indirect = False");
         if (!direct && indirect)
@@ -100,20 +117,25 @@ public class main2 {
             for (Cohort a : datastore)
                 writeToOutputFile(a.getlambda() + "," + a.getSensitivity() + "," + a.getSpecificity() + "," +
                         a.getMaxtruetotal() + "," + a.geterror(), "data.csv");
-        } else {
-            boolean pretreat = false; // signifies whether an early growth period is used
-
-            // double lambda = 0.1; // defines an arbitrary growth rate for all patients
+        }
+        else if (spawn_random_pts)
+        {
+            lambda = 0.1; // defines an arbitrary growth rate for all patients
             // Creates random patients with pre-defined parameters without filtering
-            // allpts = In_Silico.PatientSpawner(num_patients, hour, lambda, direct, indirect, pretreat);
-
+            allpts = In_Silico.PatientSpawner(num_patients, hour, lambda, direct, indirect, pretreat);
+        }
+        else if (random_selection)
+        {
             // Conducts random parameter selection in pre-defined experimental-derived ranges
-            // allpts = Dose.cumul_dose(allpts, direct, indirect, pretreat, num_patients, hour, randint);
-
+            double max_dose = 120.0;
+            allpts = Dose.Cumulative_Dose_Patients(Dose.dose_assign(allpts, direct, indirect, pretreat, max_dose,
+                    trialnum, hour, randint), direct, indirect, pretreat, hour, randint);
+        }
+        else if (grid_search)
+        {
             // Conducts a grid search to simulate patients based on parameter ranges defined in function
             Dose.Grid_Search(allpts, direct, indirect, pretreat, hour, randint);
         }
-
         // Save all patient values to "All_Values.csv in working directory"
         writeToOutputFile("Lambda,Alpha,Delta,PSI,Dose,Size", "All_Values.csv");
         for (Patient b : allpts)

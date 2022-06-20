@@ -8,7 +8,7 @@ import static java.lang.Double.isNaN;
 public class Robust {
 
     // Used for reading patient volume data in a given format (see patientdata.csv - patient #, time, volume)
-    public static ArrayList<ArrayList<Double>> readdata(String file) throws IOException {
+    public static ArrayList<ArrayList<Double>> read_data(String file) throws IOException {
         ArrayList<String[]> content = new ArrayList<>();
         BufferedReader br = new BufferedReader(new FileReader(file));
         String line;
@@ -28,7 +28,7 @@ public class Robust {
 
     // Read Patient Data and Spawn Patient Objects - Driver Code
     public static void Robust_Patient(String filename, ArrayList<Patient> allpts, ArrayList<Cohort> datastore, ArrayList<Double> hour, int selection, int trialnum, int evol, Boolean direct, Boolean indirect, Random randint) throws IOException {
-        final ArrayList<ArrayList<Double>> fulldata = readdata(filename);
+        final ArrayList<ArrayList<Double>> fulldata = read_data(filename);
         double abratio = 10; // assumed to be constant a/b ratio
         double fraction_size = 2; // assumed to be constant fraction size
         double cumul_dose = 68.0; // 66-70 as per ARO

@@ -3,7 +3,7 @@ import java.util.Random;
 
 public class Dose {
 
-    // Return a random number from a list of doubles in an ArrayList (vector)
+    // Return a random number from a list of doubles in an ArrayList (vector) - currently unused
     public static double getRandom(ArrayList<Double> array, Random r) {
         int rnd = r.nextInt(array.size());
         return array.get(rnd);
@@ -11,33 +11,29 @@ public class Dose {
 
     // Checks if the given time is found in the array of fractionation times
     public static boolean ArrayCheck(double t, double delta_t, ArrayList<Double> hour) {
-        boolean check = false;
         for (double h : hour)
         {
             if (((int) (t / delta_t) - h) % (1 / delta_t) == 0)
             {
-                check = true;
-                break;
+                return true;
             }
         }
-        return check;
+        return false;
     }
 
-    // Creates patients and assigns them a minimum dose
-    public static ArrayList<Patient> cumul_dose(ArrayList<Patient> allpts, boolean direct, boolean indirect, boolean pretreat, int trialnum, ArrayList<Double> hour, Random r)
+    // Creates patients and assigns them an abritrary maximum level of Gy
+    public static ArrayList<Patient> dose_assign(ArrayList<Patient> allpts, boolean direct, boolean indirect, boolean pretreat, double max_dose, int trialnum, ArrayList<Double> hour, Random r)
     {
         for (int i = 0; i < trialnum; i++)
         {
             Patient p = new Patient();
-            double max_dose = 120.0;
             p.setCumulDose(max_dose);
-            //p.setmin_dose(max_dose);
             allpts.add(p);
         }
-        return Cumulative_Dose_Patients(allpts, direct, indirect, pretreat, hour, r);
+        return allpts;
     }
 
-    // Sets up the patients and simulates the initial growth period prior to RT
+    // Continues setting up patients and filters based on cumulative dose criteria, conducts pretreatment if indicated
     public static ArrayList<Patient> Cumulative_Dose_Patients(ArrayList<Patient> allpts, boolean direct, boolean indirect, boolean pretreat, ArrayList<Double> hour, Random r)
     {
         double fraction_size; // d
