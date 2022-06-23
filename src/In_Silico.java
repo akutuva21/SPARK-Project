@@ -4,52 +4,37 @@ import java.util.Random;
 // Unused currently, just used for spawning patients without any basic criteria for selection
 public class In_Silico {
 
-    // Function to approximate values near zero given a value f (actual - expected) and an epsilon range for error
-    static boolean nearZero(double f, double epsilon) {
-        return ((-epsilon < f) && (f < epsilon));
-    }
-
-    // Samples values from a boxplot distribution given q1, median, q3, min, and max
-    static public double next(Random rnd, double median, double q1, double q3, double min, double max)
-    {
-        double d = -3;
-        while (d > 2.698 || d < -2.698) { // excludes values outside of range
-            d = rnd.nextGaussian();
-        }
-        if (Math.abs(d) < 0.6745) {
-            if (d < 0) {
-                return median - (median - q1) / 0.6745 * (-d);  // 2nd quartile
-            } else {
-                return median + (q3 - median) / 0.6745 * d;  // 3rd quartile
-            }
-        } else {
-            if (d < 0) {
-                return q1 - (q1 - min) / (2.698 - 0.6745) * ((-d) - 0.6745);  // 1st quartile
-            } else {
-                return q3 + (max - q3) / (2.698 - 0.6745) * (d - 0.6745);  // 4th quartile
-            }
-        }
-    }
-
     // Spawns arbitrary patients given parameters
-    public static ArrayList<Patient> PatientSpawner(int numpatients, ArrayList<Double> hour, double lambda, boolean direct, boolean indirect, boolean pretreat) {
-        ArrayList<Patient> allpts = new ArrayList<>();
-        double alpha = 0; double delta = 0; double psi = -1;
+    public static ArrayList<Patient> PatientSpawner(int numpatients, ArrayList<Double> hour, boolean direct, boolean indirect, boolean pretreat, boolean psi_check, boolean include_k, boolean include_psi, boolean include_dv) {
+        double fraction_size = 2; // Assumes a fraction size of 2 Gy
+        double fraction_freq = hour.size(); // Assumes fractionation once a day
+        double max_dose = 120.0; // D
 
-        double fraction_size = 2; // d
-
-        int scale = (int) Math.pow(10, 1);
-
+        double percent_decr = 1 - 0.322; // Assumes a 32.2% decrease in tumor volume is needed to achieve LRC
+        double psi = -1; double k; double v0; double lambda = 0; double alpha = 0; double delta = 0;
         double abratio = 10;
-        double mu = 1.0;
-        double cumul_dose = 68.0; // D
-        //int[] hour = new int[]{6};
-        double fraction_freq = hour.size();
-        int i = 0;
+        // double mu = 1.0;
 
-        while (i < numpatients) {
+        // int scale = (int) Math.pow(10, 1); // Used for rounding
+
+        int i = 0; // Tracks Patient #
+        v0 = 100; // Assumes initial normalized tumor volume is at 100%
+
+        ArrayList<Patient> allpts = new ArrayList<>();
+        for (int j = 0; j < numpatients; j++)
+        {
+            Patient p = new Patient();
+            p.setCumulDose(max_dose);
+            allpts.add(p);
+        }
+
+        while (i != numpatients) {
+            ArrayList<ArrayList<Double>> data = new ArrayList<>();
+            for (int n = 0; n < 5; n++)
+                data.add(new ArrayList<>()); // time, volume, k_vals, psi_vals, dv_vals
+
             //double fraction_size = Dose.getRandom(frac_size, r);
-            fraction_size = (double) Math.round(fraction_size * scale) / scale;
+            // fraction_size = (double) Math.round(fraction_size * scale) / scale;
 
             if (direct && !indirect)
             {
@@ -67,10 +52,6 @@ public class In_Silico {
                 delta = 0.1 * 1.45/4.31; // median delta
             }
 
-            //alpha = 0.12;
-            //lambda = 0.1;
-            //psi = 0.8;
-
             //lambda = 0.1;
             //double delta = next(r, 0.1 * 1.37 / 4.01, 0.1 * 0.94 / 4.01, 0.1 * 2.24 / 4.01, 0.1 * 0.29 / 4.01, 0.1 * 3.84 / 4.01); // assumed to be gaussian model despite box plot
             //lambda = r.nextDouble() * Math.log(2);
@@ -78,58 +59,51 @@ public class In_Silico {
             //  psi = next(r, 3.6 / 4.01, 2.97 / 4.01, 3.81 / 4.01, 2.2 / 4.01, 1.0); // assumed to be gaussian despite box plot
             //} while (!(psi <= 1) || !(psi >= 0));
 
-            ArrayList<ArrayList<Double>> data = new ArrayList<>(); // stores various data points for a given patient
-            for (int k = 0; k < 5; k++)
-                data.add(new ArrayList<>()); // time, volume, k_vals, psi_vals, dv_vals
-
-            double start = 100;
-            double k = start / psi;
-            //double k = 100;
-            //double start = 1;
-
-            alpha = 0;
-            delta = 0.1;
-            lambda = 0.1;
-            psi = 0.8;
+            k = v0 / psi;
+            double gamma = 1 - Math.exp(-alpha * fraction_size - (alpha / abratio) * Math.pow(fraction_size, 2));
 
             data.get(0).add(0.0);
-            data.get(1).add(start);
+            data.get(1).add(v0);
             data.get(2).add(k);
             data.get(3).add(psi);
-            double end = start;
+            double end = v0;
 
             if (pretreat)
             {
-                end = k / (1 + ((k / start) - 1) * Math.exp(-lambda * fraction_freq));
-
+                end = k / (1 + ((k / v0) - 1) * Math.exp(-lambda * fraction_freq));
                 data.get(0).add(fraction_freq);
                 data.get(1).add(end); // simulating only growth from first time point as v(diagnosis)
-                data.get(2).add(k);
-                data.get(3).add(end / k);
-                data.get(4).add(end - start);
+                if (include_k)
+                    data.get(2).add(k);
+                if (include_psi)
+                    data.get(3).add(end / k);
+                if (include_dv)
+                    data.get(4).add(end - v0);
             }
 
-            double gamma = 1 - Math.exp(-alpha * fraction_size - (alpha / abratio) * Math.pow(fraction_size, 2));
-            boolean psi_check = SimulateForward(k, end, lambda, gamma, delta, fraction_freq, fraction_size, cumul_dose, indirect, direct, pretreat, hour, data);
+            double cumul_dose = Dose.Cumul_Dose_Check(k, end, lambda, gamma, delta, fraction_freq, fraction_size, max_dose, indirect, direct, pretreat, hour, data, percent_decr, include_k, include_psi, include_dv, psi_check);
 
-            if (!psi_check)
+            if (cumul_dose != -2) // filters cases where if direct and indirect, V / K > 1
             {
-                Patient p = new Patient();
-                p.setlambda(lambda);
-                p.setalpha(alpha);
-                p.setdelta(delta);
-                p.setPSI(psi);
-                p.setData(data);
-                p.setmu(mu);
-                p.setFractionSize(fraction_size);
-                allpts.add(p);
+                allpts.get(i).setK(k);
+                allpts.get(i).setV0(v0);
+                allpts.get(i).setPSI(v0, k);
+                allpts.get(i).setMinDose(cumul_dose);
+                allpts.get(i).setData(data);
+                allpts.get(i).setlambda(lambda);
+                allpts.get(i).setFractionSize(fraction_size);
+                allpts.get(i).setdelta(delta);
+                allpts.get(i).setalpha(alpha);
                 i++;
+                if (i % (allpts.size() / 100.0) == 0.0)
+                    System.out.println("Completed: " + i);
             }
         }
         return allpts;
     }
+}
 
-    // Simulates patient volume over time without an LRC cap
+    /* // Same as Dose.Cumul_Dose_Check but filters out patients where V > K
     public static boolean SimulateForward(double k, double end, double lambda, double gamma, double delta, double fraction_freq, double fraction_size, double cumul_dose, boolean indirect, boolean direct, boolean pretreat, ArrayList<Double> hour, ArrayList<ArrayList<Double>> data) {
         double t = 0;
         int numdoses = 0;
@@ -169,6 +143,7 @@ public class In_Silico {
         }
         return false;
     }
+
 
     // Used to find a plane to separate patients such that PSI(i) > 1 and PSI(i) <= 1 for all i
     // Time Consuming process since it relies on random numbers without an optimization - though better than Linear SVM
@@ -247,7 +222,7 @@ public class In_Silico {
         return new double[]{a, b, c, d, (double)above / check_true, (double)below / check_false, allpts.size()};
     }
 
-    // Spawns arbitrary patients given parameters
+    // Spawns arbitrary patients given parameters - same as Dose.Grid_Search but uses PSI filtering
     public static ArrayList<Patient> Grid_Search(ArrayList<Double> hour, boolean direct, boolean indirect, boolean pretreat) {
         ArrayList<Patient> allpts = new ArrayList<>();
         double alpha = 0; double delta = 0;
@@ -323,4 +298,4 @@ public class In_Silico {
             }
         return allpts;
     }
-}
+    */

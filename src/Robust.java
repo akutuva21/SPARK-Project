@@ -1,7 +1,10 @@
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Random;
+import java.util.Comparator;
 
 import static java.lang.Double.isNaN;
 
@@ -29,10 +32,10 @@ public class Robust {
     // Read Patient Data and Spawn Patient Objects - Driver Code
     public static void Robust_Patient(String filename, ArrayList<Patient> allpts, ArrayList<Cohort> datastore, ArrayList<Double> hour, int selection, int trialnum, int evol, Boolean direct, Boolean indirect, Random randint) throws IOException {
         final ArrayList<ArrayList<Double>> fulldata = read_data(filename);
-        double abratio = 10; // assumed to be constant a/b ratio
+        double abratio = 10; // assumed to be constant alpha / beta ratio
         double fraction_size = 2; // assumed to be constant fraction size
         double cumul_dose = 68.0; // 66-70 as per ARO
-        double lambda = 0.07;
+        double lambda = 0.07; // assumes a growth rate of 0.07
         for (int i = 0; i < fulldata.size(); i += 3) // read the data file
         {
             double starttime = fulldata.get(i).get(1);
@@ -65,8 +68,7 @@ public class Robust {
             p.setlambda(lambda);
 
             double expterm = Math.exp(p.getlambda() * (middletime - starttime));
-            double psi = (startvol * expterm - middlevol) /
-                    (middlevol * (expterm - 1));
+            double psi = (startvol * expterm - middlevol) / (middlevol * (expterm - 1));
             p.setPSI(psi);
             allpts.add(p);
         }
@@ -77,7 +79,7 @@ public class Robust {
     public static void lambda_evol(ArrayList<Patient> allpts, ArrayList<Cohort> datastore, boolean direct, boolean indirect, ArrayList<Double> hour, int selection, int trialnum, int evol, Random randint) {
         for (int evolution = 0; evolution < evol; evolution++) // for each evolution
         {
-            for (int n = 0; n < trialnum; n++) // trialnum = number of sets of cohort parameters (lambda, spec/sens, error)
+            for (int n = 0; n < trialnum; n++) // trialnum = number of sets of cohort parameters (lambda, J Value, RMSE)
             {
                 double lambda = randint.nextDouble() * Math.log(2); // assuming ln(2) is an upper bound - ARO
                 for (Patient p : allpts)
@@ -102,7 +104,6 @@ public class Robust {
 
             if ((evolution + 1) % 100 == 0 && (evolution + 1) != trialnum)
                 System.out.println("Evolution Number: " + (evolution + 1));
-
         }
     }
 
@@ -121,7 +122,7 @@ public class Robust {
         Patient randomNum = allpts.get(randnum.nextInt((allpts.size() / allpts.get(0).getData().size()) + 1));
 
         for (Patient allpt : allpts) {
-            if (allpt == randomNum) // leave one out
+            if (allpt == randomNum) // leave one out testing for validation testing
                 continue;
 
             double starttime = allpt.getData().get(0).get(0);

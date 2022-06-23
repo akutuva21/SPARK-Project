@@ -3,7 +3,7 @@ import java.io.FileWriter;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Random;
-import java.util.Scanner;
+// import java.util.Scanner;
 
 public class main2 {
 
@@ -24,9 +24,8 @@ public class main2 {
     static PrintWriter pw = null;
 
     public static void main(String[] args) throws Exception {
-        Scanner in = new Scanner(System.in);
         final int seed = 7; // random seed value set
-        Random randint = new Random(seed); // declare a random object with seed
+        Random r = new Random(seed); // declare a random object with seed
 
         /* Signify default number of trials / evolutions / patients */
         // boolean d = true; // boolean for default parameters
@@ -41,23 +40,30 @@ public class main2 {
 
         int selection = 1; // boolean/int for whether to sort robustness by RMSE/J statistic
         ArrayList<Cohort> datastore = new ArrayList<>(); // stores lambda/alpha/J statistic
-        //double[] vals; // stores J Statistic and RMSE for each patient
 
+        /* pretreatment = whether treatment prior to patient growth is simulated */
         boolean pretreat = false; // signifies whether an early growth period is used
+        boolean psi_check = false; // used in in-silico testing to see whether V ever exceeds K (Direct + Indirect case)
 
+        /* direct and/or indirect cell kill enabled */
         boolean direct = true; // boolean for direct cell kill
         boolean indirect = !true; // boolean for indirect cell kill
 
+        boolean include_k = false; // Whether K values are stored (if modified over time)
+        boolean include_psi = false; // Whether PSI values are stored (if modified over time)
+        boolean include_dv = false; // Whether changes are volume are stored over time (if modified over time)
+
         /* modes of testing */
-        boolean robust_test = false; // whether robustness is to be used
-        boolean spawn_random_pts = false;
-        boolean random_selection = false;
-        boolean grid_search = true;
+        boolean robust_test = false; // Indicates whether robustness testing is being done
+        boolean spawn_random_pts = false; // Creates random patients with pre-defined parameters (no filter except PSI)
+        boolean random_selection = false; // Conducts random parameter selection in pre-defined experimental-derived ranges
+        boolean grid_search = true; // Conducts a grid search to simulate patients based on parameter ranges defined in function
 
         ArrayList<Patient> allpts = new ArrayList<>(); // creates a blank arraylist (vector) of patient objects
 
-        // Below lines are useful for potential terminal boolean implementation
-       /* System.out.println("Default? (True / False)");
+        /*// Below lines are useful for potential terminal boolean implementation
+        Scanner in = new Scanner(System.in);
+        System.out.println("Default? (True / False)");
         String def = in.nextLine();
         while (!def.equalsIgnoreCase("true") && !def.equalsIgnoreCase("false")) {
             System.out.println("Try again.");
@@ -98,21 +104,15 @@ public class main2 {
             num_patients = in.nextInt(); // Enter the number of patients tested
         }*/
 
-        if (direct && !indirect)
-            System.out.print("Direct = True, Indirect = False");
-        if (!direct && indirect)
-            System.out.print("Direct = False, Indirect = True");
-        if (direct && indirect)
-            System.out.print("Direct = True, Indirect = True");
-        if (!direct && !indirect)
-            System.out.print("Direct = False, Indirect = False");
-        System.out.println("\nNumber of Patients: " + num_patients);
-        System.out.println("\nStarting...");
+        System.out.println("Direct is " + direct + ", Indirect is " + indirect);
+        System.out.println("Number of Patients: " + num_patients);
+        System.out.println("Starting...");
 
         if (robust_test) {
+            // double[] vals; // stores J Statistic and RMSE for each patient
             String filename = "patientdata.csv"; // using sample patient data for comparison
             // Conducts robustness testing based on generated patients from experimental data
-            Robust.Robust_Patient(filename, allpts, datastore, hour, selection, trialnum, evol, direct, indirect, randint);
+            Robust.Robust_Patient(filename, allpts, datastore, hour, selection, trialnum, evol, direct, indirect, r);
             writeToOutputFile("Lambda,Sensitivity,Specificity,J Value,Error", "data.csv");
             for (Cohort a : datastore)
                 writeToOutputFile(a.getlambda() + "," + a.getSensitivity() + "," + a.getSpecificity() + "," +
@@ -120,26 +120,23 @@ public class main2 {
         }
         else if (spawn_random_pts)
         {
-            lambda = 0.1; // defines an arbitrary growth rate for all patients
-            // Creates random patients with pre-defined parameters without filtering
-            allpts = In_Silico.PatientSpawner(num_patients, hour, lambda, direct, indirect, pretreat);
+            // lambda = 0.1; // defines an arbitrary growth rate for all patients
+            allpts = In_Silico.PatientSpawner(num_patients, hour, direct, indirect, pretreat, psi_check, include_k, include_psi, include_dv);
         }
         else if (random_selection)
         {
-            // Conducts random parameter selection in pre-defined experimental-derived ranges
             double max_dose = 120.0;
-            allpts = Dose.Cumulative_Dose_Patients(Dose.dose_assign(allpts, direct, indirect, pretreat, max_dose,
-                    trialnum, hour, randint), direct, indirect, pretreat, hour, randint);
+            allpts = Dose.Cumulative_Dose_Patients(num_patients, hour, direct, indirect, pretreat, psi_check, max_dose, r, include_k, include_psi, include_dv);
         }
         else if (grid_search)
         {
-            // Conducts a grid search to simulate patients based on parameter ranges defined in function
-            Dose.Grid_Search(allpts, direct, indirect, pretreat, hour, randint);
+            Dose.Grid_Search(allpts, hour, direct, indirect, pretreat, psi_check, include_k, include_psi, include_dv);
         }
-        // Save all patient values to "All_Values.csv in working directory"
-        writeToOutputFile("Lambda,Alpha,Delta,PSI,Dose,Size", "All_Values.csv");
+        // Save all patient values to a .csv file called "All_Values" in working directory
+        String filename = "All_Values.csv";
+        writeToOutputFile("Lambda,Alpha,Delta,PSI,Dose,Size", filename);
         for (Patient b : allpts)
             writeToOutputFile(b.getlambda() + "," + b.getalpha() + "," + b.getdelta() + "," + b.getPSI() + ","
-                    + b.getMinDose() + "," + b.getFractionSize(), "All_Values.csv");
+                    + b.getMinDose() + "," + b.getFractionSize(), filename);
     }
 }
