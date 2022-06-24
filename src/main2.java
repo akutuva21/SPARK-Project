@@ -32,7 +32,6 @@ public class main2 {
         int trialnum = 100; // number of trials/sets of cohorts
         int evol = 1000; // number of evolutions (if robustness is used)
         int num_patients = 10000; // default number of in-silico patients to be used
-        double lambda;
 
         /* Signify times of treatment */
         ArrayList<Double> hour = new ArrayList<>(); // hour of treatment (current set at 6 am)
@@ -109,7 +108,6 @@ public class main2 {
         System.out.println("Starting...");
 
         if (robust_test) {
-            // double[] vals; // stores J Statistic and RMSE for each patient
             String filename = "patientdata.csv"; // using sample patient data for comparison
             // Conducts robustness testing based on generated patients from experimental data
             Robust.Robust_Patient(filename, allpts, datastore, hour, selection, trialnum, evol, direct, indirect, r);
@@ -120,13 +118,12 @@ public class main2 {
         }
         else if (spawn_random_pts)
         {
-            // lambda = 0.1; // defines an arbitrary growth rate for all patients
+            // double lambda = 0.1; // defines an arbitrary growth rate for all patients
             allpts = In_Silico.PatientSpawner(num_patients, hour, direct, indirect, pretreat, psi_check, include_k, include_psi, include_dv);
         }
         else if (random_selection)
         {
-            double max_dose = 120.0;
-            allpts = Dose.Cumulative_Dose_Patients(num_patients, hour, direct, indirect, pretreat, psi_check, max_dose, r, include_k, include_psi, include_dv);
+            Dose.Cumulative_Dose_Patients(allpts, num_patients, hour, direct, indirect, pretreat, psi_check, r, include_k, include_psi, include_dv);
         }
         else if (grid_search)
         {

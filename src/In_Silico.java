@@ -1,5 +1,5 @@
 import java.util.ArrayList;
-import java.util.Random;
+// import java.util.Random;
 
 // Unused currently, just used for spawning patients without any basic criteria for selection
 public class In_Silico {
@@ -81,7 +81,7 @@ public class In_Silico {
                     data.get(4).add(end - v0);
             }
 
-            double cumul_dose = Dose.Cumul_Dose_Check(k, end, lambda, gamma, delta, fraction_freq, fraction_size, max_dose, indirect, direct, pretreat, hour, data, percent_decr, include_k, include_psi, include_dv, psi_check);
+            double cumul_dose = Dose.Dose_Check(k, end, lambda, gamma, delta, fraction_size, max_dose, indirect, direct, pretreat, hour, data, percent_decr, include_k, include_psi, include_dv, psi_check);
 
             if (cumul_dose != -2) // filters cases where if direct and indirect, V / K > 1
             {
