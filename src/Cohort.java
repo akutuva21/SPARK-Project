@@ -1,5 +1,6 @@
 import java.util.Comparator;
 
+// Used in Robustness Testing, Otherwise Unused
 public class Cohort {
 
     private final double lambda; // lambda is the proposed growth rate

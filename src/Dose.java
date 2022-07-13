@@ -1,6 +1,7 @@
 import java.util.ArrayList;
 import java.util.Random;
 
+// Stores general dose and other fractionation-related values
 public class Dose {
     private static final double fraction_size = 2; // // Assumes a fraction size of 2 Gy
     private static final double percent_decr = 1 - 0.322; // Assumes a 32.2% decrease in tumor volume is needed to achieve LRC
@@ -47,18 +48,18 @@ public class Dose {
     }
 
     // Continues setting up patients and filters based on cumulative dose criteria, conducts pretreatment if indicated
-    public static void Cumulative_Dose_Patients(ArrayList<Patient> allpts, int numpatients, ArrayList<Double> hour, boolean direct, boolean indirect, boolean pretreat, boolean psi_check, Random r, boolean include_k, boolean include_psi, boolean include_dv)
+    public static void cumulDose(ArrayList<Patient> allpts, int numpatients, ArrayList<Double> hour, boolean direct, boolean indirect, boolean pretreat, boolean psi_check, Random r, boolean include_k, boolean include_psi, boolean include_dv)
     {
         double psi = -1; double lambda = 0; double alpha = 0; double delta = 0;
         int i = 0; // Tracks Patient #
         
         while (i != numpatients) {
-            int size = allpts.size();
+            int size = allpts.size(); // tracks current number of patients created
             ArrayList<ArrayList<Double>> data = new ArrayList<>();
             Patient p = new Patient();
 
             for (int n = 0; n < 5; n++)
-                data.add(new ArrayList<>()); // time, volume, k_vals, psi_vals, dv_vals
+                data.add(new ArrayList<>()); // appends time, volume, k_vals, psi_vals, dv_vals vectors
             p.setCumulDose(max_dose);
 
             boolean linear = !true; // Assumes a linear relation between fraction size and delta
@@ -89,7 +90,7 @@ public class Dose {
 
                     double ratio = 2.0 / delta; // median delta at 2 Gy
                     lambda = 0.49/3.72 * 0.6; // median lambda
-                    delta = fraction_size / ratio;
+                    delta = fraction_size / ratio; // scales delta based on the provided fraction size
                 }
                 else if (logistic)
                 {
@@ -118,12 +119,12 @@ public class Dose {
                 // delta = 0.07;
                 // psi = 0.7;
             }
-            Dose_Helper(allpts, p, hour, data, psi, alpha, delta, lambda, direct, indirect, pretreat, psi_check, include_k, include_psi, include_dv);
+            doseHelper(allpts, p, hour, data, psi, alpha, delta, lambda, direct, indirect, pretreat, psi_check, include_k, include_psi, include_dv);
             if (allpts.size() == (size + 1)) i++;
         }
     }
 
-    public static void Grid_Search(ArrayList<Patient> allpts, ArrayList<Double> hour, boolean direct, boolean indirect, boolean pretreat, boolean psi_check, boolean include_k, boolean include_psi, boolean include_dv) {
+    public static void gridSearch(ArrayList<Patient> allpts, ArrayList<Double> hour, boolean direct, boolean indirect, boolean pretreat, boolean psi_check, boolean include_k, boolean include_psi, boolean include_dv) {
         double psi; double alpha = 0; double delta = 0;
         double lambda = 0.07; // constant growth rate
         double[] alpha_range = {
@@ -157,15 +158,16 @@ public class Dose {
                 for (int n = 0; n < 5; n++)
                     data.add(new ArrayList<>()); // time, volume, k_vals, psi_vals, dv_vals
 
-                a.setCumulDose(max_dose);
-                Dose_Helper(allpts, a, hour, data, psi, alpha, delta, lambda, direct, indirect, pretreat, psi_check, include_k, include_psi, include_dv);
+                doseHelper(allpts, a, hour, data, psi, alpha, delta, lambda, direct, indirect, pretreat, psi_check, include_k, include_psi, include_dv);
             }
         }
     }
-    public static void Dose_Helper(ArrayList<Patient> allpts, Patient a, ArrayList<Double> hour, ArrayList<ArrayList<Double>> data, double psi, double alpha, double delta, double lambda, boolean direct, boolean indirect, boolean pretreat, boolean psi_check, boolean include_k, boolean include_psi, boolean include_dv)
+
+    // Helper function to cumulDose function and Grid Search
+    public static void doseHelper(ArrayList<Patient> allpts, Patient a, ArrayList<Double> hour, ArrayList<ArrayList<Double>> data, double psi, double alpha, double delta, double lambda, boolean direct, boolean indirect, boolean pretreat, boolean psi_check, boolean include_k, boolean include_psi, boolean include_dv)
     {
-        double k = v0 / psi;
-        double gamma = 1 - Math.exp(-alpha * fraction_size - (alpha / ab_ratio) * Math.pow(fraction_size, 2));
+        double k = v0 / psi; // calculates k
+        double gamma = 1 - Math.exp(-alpha * fraction_size - (alpha / ab_ratio) * Math.pow(fraction_size, 2)); // calculates gamma
 
         data.get(0).add(0.0);
         data.get(1).add(v0);
@@ -175,49 +177,62 @@ public class Dose {
             data.get(3).add(psi);
         double end = v0;
         if (pretreat) {
-            end = k / (1 + ((k / v0) - 1) * Math.exp(-lambda * pretreat_time));
-            data.get(0).add(pretreat_time);
-            data.get(1).add(end); // simulating only growth from first time point as v(diagnosis)
-            if (include_k)
-                data.get(2).add(k);
-            if (include_psi)
-                data.get(3).add(end / k);
-            if (include_dv)
-                data.get(4).add(end - v0);
+            end = getPretreat(data, lambda, include_k, include_psi, include_dv, k); // conducts pretreatment if needed
         }
 
-        double cumul_dose = Dose_Check(k, end, lambda, gamma, delta, fraction_size, max_dose, indirect, direct, pretreat, hour, data, percent_decr, include_k, include_psi, include_dv, psi_check);
-        if (!(cumul_dose == -1) && !((cumul_dose == -2) && psi_check)) // filters LRC (8 weeks of treatment or while number of doses <= maximum dose / fraction size)
+        double cumul_dose = doseCheck(k, end, lambda, gamma, delta, fraction_size, max_dose, indirect, direct, pretreat, hour, data, percent_decr, include_k, include_psi, include_dv, psi_check);
+        if (!(cumul_dose == -1) && !(cumul_dose == -2)) // filters LRC (8 weeks of treatment or while number of doses <= maximum dose / fraction size)
         {
-            a.setK(k);
-            a.setV0(v0);
-            a.setPSI(v0, k);
-            a.setMinDose(cumul_dose);
-            a.setData(data);
-            a.setlambda(lambda);
-            a.setFractionSize(fraction_size);
-            a.setdelta(delta);
-            a.setalpha(alpha);
+            initializePatient(fraction_size, v0, lambda, alpha, delta, data, a, k, cumul_dose, max_dose);
             if (allpts.size() % 100.0 == 0.0 && allpts.size() > 1)
                 System.out.println("Completed: " + allpts.size());
             allpts.add(a);
         }
     }
 
+    // Initializes a given patient with provided values
+    public static void initializePatient(double fraction_size, double v0, double lambda, double alpha, double delta, ArrayList<ArrayList<Double>> data, Patient p, double k, double cumul_dose, double max_dose) {
+        p.setK(k);
+        p.setV0(v0);
+        p.setPSI(v0, k);
+        p.setCumulDose(max_dose);
+        p.setMinDose(cumul_dose);
+        p.setData(data);
+        p.setlambda(lambda);
+        p.setFractionSize(fraction_size);
+        p.setdelta(delta);
+        p.setalpha(alpha);
+    }
+
+    // Conducts pretreatment for a period of "pretreat_time" days if required
+    public static double getPretreat(ArrayList<ArrayList<Double>> data, double lambda, boolean include_k, boolean include_psi, boolean include_dv, double k) {
+        double end = k / (1 + ((k / v0) - 1) * Math.exp(-lambda * pretreat_time));
+        data.get(0).add(pretreat_time);
+        data.get(1).add(end); // simulating only growth from first time point as v(diagnosis)
+        if (include_k)
+            data.get(2).add(k);
+        if (include_psi)
+            data.get(3).add(end / k);
+        if (include_dv)
+            data.get(4).add(end - v0);
+        return end;
+    }
+
     // Simulates treatment accounting for LRC (8 weeks of treatment or while number of doses <= maximum dose / fraction size)
-    public static double Dose_Check(double k, double end, double lambda, double gamma, double delta, double fraction_size,
-                                          double cumul_dose, boolean indirect, boolean direct, boolean pretreat,
-                                          ArrayList<Double> hour, ArrayList<ArrayList<Double>> data, double percent_dec,
-                                          boolean include_k, boolean include_psi, boolean include_dv, boolean psi_check) {
+    public static double doseCheck(double k, double end, double lambda, double gamma, double delta, double fraction_size,
+                                   double cumul_dose, boolean indirect, boolean direct, boolean pretreat,
+                                   ArrayList<Double> hour, ArrayList<ArrayList<Double>> data, double percent_dec,
+                                   boolean include_k, boolean include_psi, boolean include_dv, boolean psi_check) {
         double t = 0;
         int numdoses = 0;
         double start = end;
-        while (t < max_time && numdoses <= cumul_dose / fraction_size) {
-            if (direct && indirect && (end / k > 1) && psi_check)
+        while (t < max_time && numdoses <= cumul_dose / fraction_size) // filters by LRC / time constraints (if either missed, return -1)
+        {
+            if (direct && indirect && (end / k > 1) && psi_check) // returns "-2" if psi > 1 with both direct/indirect kill activated
                 return -2;
-            if (end / start <= percent_dec)
+            if (end / start <= percent_dec) // if LRC achieved, return minimum dose
                 return numdoses * fraction_size;
-            t += delta_t;
+            t += delta_t; // t increments by 1 hour
             double weekend = (int) (t / delta_t) % (7 / delta_t);
             if (weekend <= 120) // if not weekend
             {
@@ -233,7 +248,7 @@ public class Dose {
                         numdoses++; // increment number of doses
                 }
             }
-            end = k / (1 + ((k / end) - 1) * Math.exp(-lambda * delta_t));
+            end = k / (1 + ((k / end) - 1) * Math.exp(-lambda * delta_t)); // volume changes as per analytic solution
             data.get(0).add(t + (pretreat ? pretreat_time : 0)); // add extra pretreatment time if pretreatment assumed
             data.get(1).add(end); // volume
             if (include_k)

@@ -11,7 +11,7 @@ import static java.lang.Double.isNaN;
 public class Robust {
 
     // Used for reading patient volume data in a given format (see patientdata.csv - patient #, time, volume)
-    public static ArrayList<ArrayList<Double>> read_data(String file) throws IOException {
+    public static ArrayList<ArrayList<Double>> readData(String file) throws IOException {
         ArrayList<String[]> content = new ArrayList<>();
         BufferedReader br = new BufferedReader(new FileReader(file));
         String line;
@@ -30,8 +30,8 @@ public class Robust {
     }
 
     // Read Patient Data and Spawn Patient Objects - Driver Code
-    public static void Robust_Patient(String filename, ArrayList<Patient> allpts, ArrayList<Cohort> datastore, ArrayList<Double> hour, int selection, int trialnum, int evol, Boolean direct, Boolean indirect, Random randint) throws IOException {
-        final ArrayList<ArrayList<Double>> fulldata = read_data(filename);
+    public static void robustPatient(String filename, ArrayList<Patient> allpts, ArrayList<Cohort> datastore, ArrayList<Double> hour, int selection, int trialnum, int evol, Boolean direct, Boolean indirect, Random randint) throws IOException {
+        final ArrayList<ArrayList<Double>> fulldata = readData(filename);
         double abratio = 10; // assumed to be constant alpha / beta ratio
         double fraction_size = 2; // assumed to be constant fraction size
         double cumul_dose = 68.0; // 66-70 as per ARO
@@ -72,11 +72,11 @@ public class Robust {
             p.setPSI(psi);
             allpts.add(p);
         }
-        lambda_evol(allpts, datastore, direct, indirect, hour, selection, trialnum, evol, randint);
+        lambdaEvol(allpts, datastore, direct, indirect, hour, selection, trialnum, evol, randint);
     }
 
     // Robustness testing to regenerate patients with a common lambda
-    public static void lambda_evol(ArrayList<Patient> allpts, ArrayList<Cohort> datastore, boolean direct, boolean indirect, ArrayList<Double> hour, int selection, int trialnum, int evol, Random randint) {
+    public static void lambdaEvol(ArrayList<Patient> allpts, ArrayList<Cohort> datastore, boolean direct, boolean indirect, ArrayList<Double> hour, int selection, int trialnum, int evol, Random randint) {
         for (int evolution = 0; evolution < evol; evolution++) // for each evolution
         {
             for (int n = 0; n < trialnum; n++) // trialnum = number of sets of cohort parameters (lambda, J Value, RMSE)
@@ -84,7 +84,7 @@ public class Robust {
                 double lambda = randint.nextDouble() * Math.log(2); // assuming ln(2) is an upper bound - ARO
                 for (Patient p : allpts)
                     p.setlambda(lambda); // sets all patients with a common lambda
-                double[] vals = J_Error(allpts, lambda, hour, randint, direct, indirect);
+                double[] vals = robustValid(allpts, lambda, hour, randint, direct, indirect);
                 datastore.add(new Cohort(lambda, vals[0], vals[1], vals[2]));
             }
             if (selection == 0) // selection parameter determines which sort to be used
@@ -108,7 +108,7 @@ public class Robust {
     }
 
     // Used for robustness validation for a given predefined group of patients
-    public static double[] J_Error(ArrayList<Patient> allpts, double lambda, ArrayList<Double> hour, Random randnum, boolean direct, boolean indirect) {
+    public static double[] robustValid(ArrayList<Patient> allpts, double lambda, ArrayList<Double> hour, Random randnum, boolean direct, boolean indirect) {
         int TP = 0;
         int TN = 0;
         int FP = 0;
@@ -219,7 +219,7 @@ public class Robust {
         for (Cohort a : datastore) {
             if (a.getSensitivity() == 0 && a.getSpecificity() == 0 && a.geterror() == 0) // for a new patient, find the sensitivity/specificity/error
             {
-                double[] vals = J_Error(allpts, a.getlambda(), hour, randnum, direct, indirect);
+                double[] vals = robustValid(allpts, a.getlambda(), hour, randnum, direct, indirect);
                 a.setSensitivity(vals[0]);
                 a.setSpecificity(vals[1]);
                 a.seterror(vals[2]);

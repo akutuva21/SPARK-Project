@@ -5,15 +5,15 @@ import java.util.ArrayList;
 public class In_Silico {
 
     // Spawns arbitrary patients given parameters
-    public static ArrayList<Patient> PatientSpawner(int numpatients, ArrayList<Double> hour, boolean direct, boolean indirect, boolean pretreat, boolean psi_check, boolean include_k, boolean include_psi, boolean include_dv) {
+    public static ArrayList<Patient> patientSpawner(int numpatients, ArrayList<Double> hour, boolean direct, boolean indirect, boolean pretreat, boolean psi_check, boolean include_k, boolean include_psi, boolean include_dv) {
         double fraction_size = 2; // Assumes a fraction size of 2 Gy
-        double fraction_freq = hour.size(); // Assumes fractionation once a day
         double max_dose = 120.0; // D
+        // double fraction_freq = hour.size(); // Assumes fractionation once a day - unused
 
         double percent_decr = 1 - 0.322; // Assumes a 32.2% decrease in tumor volume is needed to achieve LRC
-        double psi = -1; double k; double v0; double lambda = 0; double alpha = 0; double delta = 0;
-        double abratio = 10;
-        // double mu = 1.0;
+        double psi = -1; double v0; double lambda = 0; double alpha = 0; double delta = 0;
+        double abratio = 10; // ratio of alpha / beta used in finding gamma variable
+        // double mu = 1.0; // unused
 
         // int scale = (int) Math.pow(10, 1); // Used for rounding
 
@@ -21,15 +21,9 @@ public class In_Silico {
         v0 = 100; // Assumes initial normalized tumor volume is at 100%
 
         ArrayList<Patient> allpts = new ArrayList<>();
-        for (int j = 0; j < numpatients; j++)
-        {
-            Patient p = new Patient();
-            p.setCumulDose(max_dose);
-            allpts.add(p);
-        }
-
         while (i != numpatients) {
             ArrayList<ArrayList<Double>> data = new ArrayList<>();
+            Patient p = new Patient();
             for (int n = 0; n < 5; n++)
                 data.add(new ArrayList<>()); // time, volume, k_vals, psi_vals, dv_vals
 
@@ -59,51 +53,43 @@ public class In_Silico {
             //  psi = next(r, 3.6 / 4.01, 2.97 / 4.01, 3.81 / 4.01, 2.2 / 4.01, 1.0); // assumed to be gaussian despite box plot
             //} while (!(psi <= 1) || !(psi >= 0));
 
-            k = v0 / psi;
-            double gamma = 1 - Math.exp(-alpha * fraction_size - (alpha / abratio) * Math.pow(fraction_size, 2));
-
-            data.get(0).add(0.0);
-            data.get(1).add(v0);
-            data.get(2).add(k);
-            data.get(3).add(psi);
-            double end = v0;
-
-            if (pretreat)
-            {
-                end = k / (1 + ((k / v0) - 1) * Math.exp(-lambda * fraction_freq));
-                data.get(0).add(fraction_freq);
-                data.get(1).add(end); // simulating only growth from first time point as v(diagnosis)
-                if (include_k)
-                    data.get(2).add(k);
-                if (include_psi)
-                    data.get(3).add(end / k);
-                if (include_dv)
-                    data.get(4).add(end - v0);
-            }
-
-            double cumul_dose = Dose.Dose_Check(k, end, lambda, gamma, delta, fraction_size, max_dose, indirect, direct, pretreat, hour, data, percent_decr, include_k, include_psi, include_dv, psi_check);
-
-            if (cumul_dose != -2) // filters cases where if direct and indirect, V / K > 1
-            {
-                allpts.get(i).setK(k);
-                allpts.get(i).setV0(v0);
-                allpts.get(i).setPSI(v0, k);
-                allpts.get(i).setMinDose(cumul_dose);
-                allpts.get(i).setData(data);
-                allpts.get(i).setlambda(lambda);
-                allpts.get(i).setFractionSize(fraction_size);
-                allpts.get(i).setdelta(delta);
-                allpts.get(i).setalpha(alpha);
-                i++;
-                if (i % (allpts.size() / 100.0) == 0.0)
-                    System.out.println("Completed: " + i);
-            }
+            i = getInSilicoPt(hour, direct, indirect, pretreat, psi_check, include_k, include_psi, include_dv, fraction_size, max_dose, percent_decr, psi, v0, lambda, alpha, delta, abratio, i, allpts, data, p);
         }
         return allpts;
     }
+
+    // Adds components to Patient and appends to patient vector if possible
+    private static int getInSilicoPt(ArrayList<Double> hour, boolean direct, boolean indirect, boolean pretreat, boolean psi_check, boolean include_k, boolean include_psi, boolean include_dv, double fraction_size, double max_dose, double percent_decr, double psi, double v0, double lambda, double alpha, double delta, double abratio, int i, ArrayList<Patient> allpts, ArrayList<ArrayList<Double>> data, Patient p)
+    {
+        double k = v0 / psi; // calculates k
+        double gamma = 1 - Math.exp(-alpha * fraction_size - (alpha / abratio) * Math.pow(fraction_size, 2)); // calculates gamma
+
+        data.get(0).add(0.0);
+        data.get(1).add(v0);
+        if (include_k)
+            data.get(2).add(k);
+        if (include_psi)
+            data.get(3).add(psi);
+        double end = v0;
+        if (pretreat) {
+            end = Dose.getPretreat(data, lambda, include_k, include_psi, include_dv, k); // conducts pretreatment if needed
+        }
+
+        double cumul_dose = Dose.doseCheck(k, end, lambda, gamma, delta, fraction_size, max_dose, indirect, direct, pretreat, hour, data, percent_decr, include_k, include_psi, include_dv, psi_check);
+
+        if (cumul_dose != -2) // filters cases where if direct and indirect, V / K > 1
+        {
+            Dose.initializePatient(fraction_size, v0, lambda, alpha, delta, data, p, k, cumul_dose, max_dose);
+            if (i % (allpts.size() / 100.0) == 0.0 && allpts.size() > 1)
+                System.out.println("Completed: " + i);
+            allpts.add(p);
+            i++;
+        }
+        return i;
+    }
 }
 
-    /* // Same as Dose.Cumul_Dose_Check but filters out patients where V > K
+    /* // Same as Dose.cumulDose but filters out patients where V > K
     public static boolean SimulateForward(double k, double end, double lambda, double gamma, double delta, double fraction_freq, double fraction_size, double cumul_dose, boolean indirect, boolean direct, boolean pretreat, ArrayList<Double> hour, ArrayList<ArrayList<Double>> data) {
         double t = 0;
         int numdoses = 0;

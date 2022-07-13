@@ -1,5 +1,6 @@
 import java.util.ArrayList;
 
+// Default object to store simulated patients and patient-specific values along with fractionation values of note
 public class Patient {
     private double lambda; // Patient-specific tumor growth rate
     private double alpha; // Alpha value in linear-quadratic model of cell death
@@ -93,12 +94,8 @@ public class Patient {
         return cumul_dose;
     }
 
-    // Setter function for Minimum and Cumulative Dose Required
-    public void setCumulDose(double cumul_dose)
-    {
-        this.cumul_dose = cumul_dose;
-        this.min_dose = cumul_dose;
-    }
+    // Setter function for Minimum Dose Required
+    public void setCumulDose(double cumul_dose) { this.cumul_dose = cumul_dose; }
 
     // Getter function for Minimum Dose Required
     public double getMinDose()

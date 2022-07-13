@@ -110,7 +110,7 @@ public class main2 {
         if (robust_test) {
             String filename = "patientdata.csv"; // using sample patient data for comparison
             // Conducts robustness testing based on generated patients from experimental data
-            Robust.Robust_Patient(filename, allpts, datastore, hour, selection, trialnum, evol, direct, indirect, r);
+            Robust.robustPatient(filename, allpts, datastore, hour, selection, trialnum, evol, direct, indirect, r);
             writeToOutputFile("Lambda,Sensitivity,Specificity,J Value,Error", "data.csv");
             for (Cohort a : datastore)
                 writeToOutputFile(a.getlambda() + "," + a.getSensitivity() + "," + a.getSpecificity() + "," +
@@ -119,21 +119,22 @@ public class main2 {
         else if (spawn_random_pts)
         {
             // double lambda = 0.1; // defines an arbitrary growth rate for all patients
-            allpts = In_Silico.PatientSpawner(num_patients, hour, direct, indirect, pretreat, psi_check, include_k, include_psi, include_dv);
+            allpts = In_Silico.patientSpawner(num_patients, hour, direct, indirect, pretreat, psi_check, include_k, include_psi, include_dv);
         }
         else if (random_selection)
         {
-            Dose.Cumulative_Dose_Patients(allpts, num_patients, hour, direct, indirect, pretreat, psi_check, r, include_k, include_psi, include_dv);
+            Dose.cumulDose(allpts, num_patients, hour, direct, indirect, pretreat, psi_check, r, include_k, include_psi, include_dv);
         }
         else if (grid_search)
         {
-            Dose.Grid_Search(allpts, hour, direct, indirect, pretreat, psi_check, include_k, include_psi, include_dv);
+            Dose.gridSearch(allpts, hour, direct, indirect, pretreat, psi_check, include_k, include_psi, include_dv);
         }
         // Save all patient values to a .csv file called "All_Values" in working directory
-        String filename = "All_Values.csv";
-        writeToOutputFile("Lambda,Alpha,Delta,PSI,Dose,Size", filename);
+        String filename = "All_Values";
+        String extension = ".csv";
+        writeToOutputFile("Lambda,Alpha,Delta,PSI,Dose,Size", filename + extension);
         for (Patient b : allpts)
             writeToOutputFile(b.getlambda() + "," + b.getalpha() + "," + b.getdelta() + "," + b.getPSI() + ","
-                    + b.getMinDose() + "," + b.getFractionSize(), filename);
+                    + b.getMinDose() + "," + b.getFractionSize(), filename + extension);
     }
 }
