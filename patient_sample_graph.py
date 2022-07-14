@@ -1,7 +1,6 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from matplotlib import style, cm, colors
 
 s = '../SPARK Project/All_Values.csv'
 t = pd.read_csv(str(s))
