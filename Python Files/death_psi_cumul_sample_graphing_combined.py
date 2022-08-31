@@ -8,7 +8,7 @@ style.use('default')
 fig = plt.figure(figsize=(6.8*2, 5))
 outer_grid = gridspec.GridSpec(2,4, width_ratios=(2,0.25,1,1), hspace = 0.2)
 
-direct = True
+direct = not True
 indirect = not direct
 plot_width = 3
 font = 20
@@ -22,7 +22,7 @@ ax.text(-0.275, 1.15, 'A', transform=ax.transAxes,
 s = '../SPARK Project/Paper Edited Figures/Alpha_PSI_dose.csv'
 t = pd.read_csv(s)
 s2 = '../SPARK Project/Paper Edited Figures/Delta_PSI_dose.csv'
-s2 = 'All_Values.csv'
+#s2 = 'All_Values.csv'
 t2 = pd.read_csv(s2)
 
 if direct:
@@ -60,12 +60,12 @@ if direct:
     alpha = t.iloc[:,1]
     psi_direct = t.iloc[:,3]
     frac_size_direct = t.iloc[:,5]
-    num_direct = cumul_direct / frac_size_direct
+    num = cumul_direct / frac_size_direct
 
 if indirect:
     psi_indirect = t2.iloc[:,3]
     frac_size_indirect = t2.iloc[:,5]
-    num_indirect = cumul_indirect / frac_size_indirect
+    num = cumul_indirect / frac_size_indirect
     delta = t2.iloc[:,2]
 
 if direct:
@@ -97,70 +97,29 @@ if indirect:
     y = psi_indirect
     cumul = cumul_indirect
 
-#sc = plt.scatter(x,y, c = c, cmap = cmap, norm = norm, s = 10)
-# def density_estimation(m1, m2):
-#     X, Y = np.mgrid[xmin:xmax:100j, ymin:ymax:100j]                                                     
-#     positions = np.vstack([X.ravel(), Y.ravel()])                                                       
-#     values = np.vstack([m1, m2])                                                                        
-#     kernel = stats.gaussian_kde(values)                                                                 
-#     Z = np.reshape(kernel(positions).T, X.shape)
-#     return X, Y, Z
-
-#X, Y, Z = density_estimation(x,y)
-#ax.contour(X, Y, Z, 15, linewidths=0.5, colors='k')
-
-# # Number of recursive subdivisions of the initial mesh for smooth plots.
-# # Values >3 might result in a very high number of triangles for the refine
-# # mesh: new triangles numbering = (4**subdiv)*ntri
-# subdiv = 3
-
-# # Float > 0. adjusting the proportion of (invalid) initial triangles which will
-# # be masked out. Enter 0 for no mask.
-# subdiv = 3
-# min_circle_ratio = .01
-
-# tri = Triangulation(x, y)
-# ntri = tri.triangles.shape[0]
-
-# mask = TriAnalyzer(tri).get_flat_tri_mask(min_circle_ratio)
-# tri.set_mask(mask)
-
-# refiner = UniformTriRefiner(tri)
-# tri_refi, z_test_refi = refiner.refine_field(c, subdiv=subdiv)
-
-# z_expected = experiment_res(tri_refi.x, tri_refi.y)
-
-# flat_tri = Triangulation(x_test, y_test)
-# flat_tri.set_mask(~mask)
-
-cmap = cm.get_cmap('viridis_r', 10)
-cmap2 = cm.get_cmap('viridis_r')
+cmap = cm.get_cmap('viridis_r')
 norm=colors.Normalize(min(cumul_direct.min(),cumul_indirect.min()), max(cumul_direct.max(),cumul_indirect.max()))
+#norm = colors.Normalize(num.min(), num.max())
 
 if indirect:
-    y_int = 1.3
-    slope = 23
-    x1,y1,cumul1 = x[y + slope*x < y_int],y[y + slope*x < y_int],cumul[y + slope*x < y_int]
-    sc = ax.tricontourf(x1,y1,cumul1, cmap = cmap, norm = norm)
+    manual_locations = [
+    (0.08, 0.86), (0.065, 0.82), (0.05, 0.785), (0.04, 0.762)]
+    
+    cond = x < 0.3
+    ax.tricontourf(x[cond],y[cond],cumul[cond], alpha = 1, cmap = cmap, norm = norm)
+    ax.scatter(x[~cond],y[~cond],c = cumul[~cond],alpha = 1, cmap = cmap, norm = norm, marker = 's', s = 10)
+    
+    sc = ax.tricontour(x, y, num, colors = 'k', linewidths = 1, alpha = 1)
+    ax.clabel(sc, sc.levels[0:5], fontsize = 12, colors = 'k', manual = manual_locations, inline_spacing = 7) 
 
-    y_int = y_int - 0.01
-    slope = slope + 0.1
-    x2,y2,cumul2 = x[y + slope*x >= y_int],y[y + slope*x >= y_int],cumul[y + slope*x >= y_int]
-    sc = ax.scatter(x2,y2,c = cumul2, marker = 's', s = 10, alpha = 1, cmap = cmap, norm = norm)
-
-else:
-    sc = ax.scatter(x,y,c = cumul, marker = 's', s = 10, cmap = cmap, norm = norm)
-
-# cols = np.unique(x).shape[0]
-# X = x.reshape(-1, cols)
-# Y = y.reshape(-1, cols)
-# Z = cols.reshape(-1, cols)
-# ax.contourf(X,Y,Z)
-#x1,y1,cumul1 = x[x < 0.03], y[x < 0.03], cumul[x < 0.03]
-# sc = ax.scatter(xg,yg,zg, cmap = cmap, norm = norm)
-
-#sc = ax.tricontourf(x1,y1,cumul1, cmap = cmap, norm = norm)
-#sc = ax.scatter(x, y, c = cumul, marker = '.', s = 5, cmap = cmap, norm = norm)
+if direct:
+    ax.scatter(x,y,c = cumul, marker = 's', s = 10, cmap = cmap, norm = norm)
+    #ax.tricontourf(x,y,cumul, cmap = cmap, norm = norm)
+    levels = 12
+    manual_locations = [
+    (0.112, 0.70), (0.105, 0.78), (0.0985, 0.85), (0.095, 0.88)]
+    sc = ax.tricontour(x,y,num, colors = 'k', levels = levels, linewidths = 1, alpha = 1)
+    ax.clabel(sc, sc.levels[0:5],fontsize = 12, manual = manual_locations, colors = 'k')
 
 for axis in ['bottom','left']:
   ax.spines[axis].set_linewidth(axis_thickness);
@@ -169,7 +128,7 @@ for axis in ['top','right']:
   ax.spines[axis].set_linewidth(0);
 ax.tick_params(width = axis_thickness);
 
-sm = plt.cm.ScalarMappable(norm=norm, cmap = cmap2)
+sm = plt.cm.ScalarMappable(norm=norm, cmap = cmap)
 cb = plt.colorbar(sm, aspect = 30)
 cb.ax.set_ylabel('Cumulative Dose (Gy)', labelpad = 15, fontsize = font)
 cb.ax.tick_params(axis = 'both', which = 'major', labelsize = font)
@@ -186,7 +145,7 @@ for a in range(len(labels)):
     y2 = y[a]
     if a == 0:
         y2 = 0.905
-    text = ax.text(x2[a], y2, labels[a], color='red', fontweight = 'bold', fontsize = label_font if a > 0 else 20)
+    text = ax.text(x2[a], y2, labels[a], color='black', fontweight = 'bold', fontsize = label_font if a > 0 else 20)
 
 # [0.005, -0.025]
 #plt.scatter(x, y, marker = 'X', c = 'black', s = 400, linewidth = 1.5, edgecolors='black')
