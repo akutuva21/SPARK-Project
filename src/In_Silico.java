@@ -1,8 +1,14 @@
 import java.util.ArrayList;
-// import java.util.Random;
+import java.util.Random;
 
 // Unused currently, just used for spawning patients without any basic criteria for selection
 public class In_Silico {
+
+    // Return a random number from a list of doubles in an ArrayList (vector) - currently unused
+    public static double getRandom(ArrayList<Double> array, Random r) {
+        int rnd = r.nextInt(array.size());
+        return array.get(rnd);
+    }
 
     // Spawns arbitrary patients given parameters
     public static ArrayList<Patient> patientSpawner(int numpatients, ArrayList<Double> hour, boolean direct, boolean indirect, boolean pretreat, boolean psi_check, boolean include_k, boolean include_psi, boolean include_dv) {
@@ -15,7 +21,21 @@ public class In_Silico {
         double abratio = 10; // ratio of alpha / beta used in finding gamma variable
         // double mu = 1.0; // unused
 
-        // int scale = (int) Math.pow(10, 1); // Used for rounding
+        int scale = (int) Math.pow(10, 1); // Used for rounding
+
+        ArrayList<Double> frac_size = new ArrayList<>();
+        for (double i = 0.1; i <= 30; i += 0.1)
+        {
+            frac_size.add(i);
+        }
+        ArrayList<Double> psi_gen = new ArrayList<>();
+        for (double i = 0.1; i <= 1; i += 0.02)
+        {
+            psi_gen.add(i);
+        }
+        Random r = new Random();
+        r.setSeed(1);
+        numpatients = 500_000;
 
         int i = 0; // Tracks Patient #
         v0 = 100; // Assumes initial normalized tumor volume is at 100%
@@ -27,7 +47,6 @@ public class In_Silico {
             for (int n = 0; n < 5; n++)
                 data.add(new ArrayList<>()); // time, volume, k_vals, psi_vals, dv_vals
 
-            //double fraction_size = Dose.getRandom(frac_size, r);
             // fraction_size = (double) Math.round(fraction_size * scale) / scale;
 
             if (direct && !indirect)
@@ -45,6 +64,10 @@ public class In_Silico {
                 //delta = In_Silico.next(r, 0.1 * 1.45/4.31, 0.1 * 0.95/4.31, 0.1 * 2.38/4.31, 0.1 * 0.31/4.31, 0.1 * 4.11/4.31);
                 delta = 0.1 * 1.45/4.31; // median delta
             }
+
+            alpha = 0.09;
+            fraction_size = getRandom(frac_size, r);
+            psi = getRandom(psi_gen, r);
 
             //lambda = 0.1;
             //double delta = next(r, 0.1 * 1.37 / 4.01, 0.1 * 0.94 / 4.01, 0.1 * 2.24 / 4.01, 0.1 * 0.29 / 4.01, 0.1 * 3.84 / 4.01); // assumed to be gaussian model despite box plot

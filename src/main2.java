@@ -54,9 +54,9 @@ public class main2 {
 
         /* modes of testing */
         boolean robust_test = false; // Indicates whether robustness testing is being done
-        boolean spawn_random_pts = false; // Creates random patients with pre-defined parameters (no filter except PSI)
+        boolean spawn_random_pts = true; // Creates random patients with pre-defined parameters (no filter except PSI)
         boolean random_selection = false; // Conducts random parameter selection in pre-defined experimental-derived ranges
-        boolean grid_search = true; // Conducts a grid search to simulate patients based on parameter ranges defined in function
+        boolean grid_search = false; // Conducts a grid search to simulate patients based on parameter ranges defined in function
 
         ArrayList<Patient> allpts = new ArrayList<>(); // creates a blank arraylist (vector) of patient objects
 

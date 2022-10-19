@@ -27,7 +27,7 @@ orig_cmap = cm.viridis_r
 col = orig_cmap(np.linspace(min_val, max_val, m))
 cmap = colors.LinearSegmentedColormap.from_list("mycmap", col)
 
-sc = plt.scatter(x=frac_size, y=num, c=psi, cmap=cmap, edgecolors='none')
+sc = plt.scatter(x=frac_size[cumul >= 0], y=num[cumul >= 0], c=psi[cumul >= 0], cmap=cmap, edgecolors='none')
 
 # correlation_xy = np.corrcoef(x, y)[0, 1]
 # print(correlation_xy**2)

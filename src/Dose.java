@@ -262,12 +262,6 @@ public class Dose {
     }
 }
 
-    /* // Return a random number from a list of doubles in an ArrayList (vector) - currently unused
-    public static double getRandom(ArrayList<Double> array, Random r) {
-        int rnd = r.nextInt(array.size());
-        return array.get(rnd);
-    } */
-
     /* // Function to approximate values near zero given a value f (actual - expected) and an epsilon range for error
     static boolean nearZero(double f, double epsilon) {
         return ((-epsilon < f) && (f < epsilon));
