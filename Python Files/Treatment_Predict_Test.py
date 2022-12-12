@@ -14,7 +14,7 @@ s = 'Volume_Data.csv'
 t = pd.read_csv(s)
 s2 = 'k_vals.csv'
 t2 = pd.read_csv(s2)
-s3 = '../SPARK Project/All_Values.csv'
+s3 = 'All_Values.csv'
 t3 = pd.read_csv(s3)
 fig, ax = plt.subplots()
 

@@ -8,8 +8,9 @@ from textwrap import wrap
 fig, ax = plt.subplots()
 style.use('default')
 
-s3 = '../SPARK Project/All_Values.csv'
+s3 = r'C:\Users\coola\Desktop\Coding\SPARK-Project\All_Values.csv'
 t3 = pd.read_csv(s3)
+print(t3)
 
 lam = t3.iloc[:, 0]
 alpha = t3.iloc[:, 1]
@@ -27,7 +28,8 @@ orig_cmap = cm.viridis_r
 col = orig_cmap(np.linspace(min_val, max_val, m))
 cmap = colors.LinearSegmentedColormap.from_list("mycmap", col)
 
-sc = plt.scatter(x=frac_size[cumul >= 0], y=num[cumul >= 0], c=psi[cumul >= 0], cmap=cmap, edgecolors='none')
+mask = (cumul >= 0) & (psi == 0.7)
+sc = plt.scatter(x=frac_size[mask], y=num[mask], c=cumul[mask], cmap=cmap, edgecolors='none')
 
 # correlation_xy = np.corrcoef(x, y)[0, 1]
 # print(correlation_xy**2)

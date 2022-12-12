@@ -5,7 +5,7 @@ from matplotlib import style, cm
 
 style.use('ggplot')
 
-s3 = '../SPARK Project/All_Values.csv'
+s3 = r'C:\Users\coola\Desktop\Coding\SPARK-Project\All_Values.csv'
 t3 = pd.read_csv(s3)
 
 lam = t3.iloc[:, 0]
@@ -50,3 +50,4 @@ ax.tick_params(axis='both', which='major', labelsize=15)
 cb = plt.colorbar(sc)
 cb.ax.set_ylabel('Cumulative Dose (Gy)', labelpad=30, fontsize=20)
 cb.ax.tick_params(axis='both', which='major', labelsize=15)
+plt.show()

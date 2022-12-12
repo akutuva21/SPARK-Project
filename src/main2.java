@@ -4,6 +4,7 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Random;
 // import java.util.Scanner;
+import java.text.DecimalFormat;
 
 public class main2 {
 
@@ -54,9 +55,9 @@ public class main2 {
 
         /* modes of testing */
         boolean robust_test = false; // Indicates whether robustness testing is being done
-        boolean spawn_random_pts = true; // Creates random patients with pre-defined parameters (no filter except PSI)
+        boolean spawn_random_pts = !true; // Creates random patients with pre-defined parameters (no filter except PSI)
         boolean random_selection = false; // Conducts random parameter selection in pre-defined experimental-derived ranges
-        boolean grid_search = false; // Conducts a grid search to simulate patients based on parameter ranges defined in function
+        boolean grid_search = !false; // Conducts a grid search to simulate patients based on parameter ranges defined in function
 
         ArrayList<Patient> allpts = new ArrayList<>(); // creates a blank arraylist (vector) of patient objects
 
@@ -133,8 +134,11 @@ public class main2 {
         String filename = "All_Values";
         String extension = ".csv";
         writeToOutputFile("Lambda,Alpha,Delta,PSI,Dose,Size", filename + extension);
+
+        DecimalFormat df = new DecimalFormat("#.##");
+
         for (Patient b : allpts)
-            writeToOutputFile(b.getlambda() + "," + b.getalpha() + "," + b.getdelta() + "," + b.getPSI() + ","
-                    + b.getMinDose() + "," + b.getFractionSize(), filename + extension);
+            writeToOutputFile(df.format(b.getlambda()) + "," + df.format(b.getalpha()) + "," + df.format(b.getdelta())
+                    + "," + df.format(b.getPSI()) + "," + df.format(b.getMinDose()) + "," + df.format(b.getFractionSize()), filename + extension);
     }
 }

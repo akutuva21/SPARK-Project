@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-s = '../SPARK Project/All_Values.csv'
+s = 'All_Values.csv'
 t = pd.read_csv(str(s))
 
 fig = plt.figure()

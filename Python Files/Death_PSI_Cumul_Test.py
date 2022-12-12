@@ -6,8 +6,8 @@ from matplotlib import style, cm, colors
 style.use('default')
 fig, ax = plt.subplots()
 
-s = '../Figure Data/Alpha_PSI_dose.csv'
-s2 = '../Figure Data/Delta_PSI_dose.csv'
+s = 'Figure Data/Alpha_PSI_dose.csv'
+s2 = 'Figure Data/Delta_PSI_dose.csv'
 t = pd.read_csv(s)
 t2 = pd.read_csv(s2)
 

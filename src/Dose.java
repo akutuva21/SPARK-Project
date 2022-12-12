@@ -119,7 +119,7 @@ public class Dose {
                 // delta = 0.07;
                 // psi = 0.7;
             }
-            doseHelper(allpts, p, hour, data, psi, alpha, delta, lambda, direct, indirect, pretreat, psi_check, include_k, include_psi, include_dv);
+            doseHelper(allpts, p, hour, data, fraction_size, psi, alpha, delta, lambda, direct, indirect, pretreat, psi_check, include_k, include_psi, include_dv);
             if (allpts.size() == (size + 1)) i++;
         }
     }
@@ -152,19 +152,21 @@ public class Dose {
         for (double x = range[0]; x <= range[1]; x += incr) {
             if (indirect) delta = x;
             if (direct) alpha = x;
-            for (psi = psi_range[0]; psi <= psi_range[1]; psi += psi_incr) {
-                Patient a = new Patient();
-                ArrayList<ArrayList<Double>> data = new ArrayList<>();
-                for (int n = 0; n < 5; n++)
-                    data.add(new ArrayList<>()); // time, volume, k_vals, psi_vals, dv_vals
+            for (double fraction_size = 0.5; fraction_size <= 10; fraction_size += 0.5) {
+                for (psi = psi_range[0]; psi <= psi_range[1]; psi += psi_incr) {
+                    Patient a = new Patient();
+                    ArrayList<ArrayList<Double>> data = new ArrayList<>();
+                    for (int n = 0; n < 5; n++)
+                        data.add(new ArrayList<>()); // time, volume, k_vals, psi_vals, dv_vals
 
-                doseHelper(allpts, a, hour, data, psi, alpha, delta, lambda, direct, indirect, pretreat, psi_check, include_k, include_psi, include_dv);
+                    doseHelper(allpts, a, hour, data, fraction_size, psi, alpha, delta, lambda, direct, indirect, pretreat, psi_check, include_k, include_psi, include_dv);
+                }
             }
         }
     }
 
     // Helper function to cumulDose function and Grid Search
-    public static void doseHelper(ArrayList<Patient> allpts, Patient a, ArrayList<Double> hour, ArrayList<ArrayList<Double>> data, double psi, double alpha, double delta, double lambda, boolean direct, boolean indirect, boolean pretreat, boolean psi_check, boolean include_k, boolean include_psi, boolean include_dv)
+    public static void doseHelper(ArrayList<Patient> allpts, Patient a, ArrayList<Double> hour, ArrayList<ArrayList<Double>> data, double fraction_size, double psi, double alpha, double delta, double lambda, boolean direct, boolean indirect, boolean pretreat, boolean psi_check, boolean include_k, boolean include_psi, boolean include_dv)
     {
         double k = v0 / psi; // calculates k
         double gamma = 1 - Math.exp(-alpha * fraction_size - (alpha / ab_ratio) * Math.pow(fraction_size, 2)); // calculates gamma

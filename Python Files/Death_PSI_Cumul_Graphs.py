@@ -19,38 +19,38 @@ ax = plt.subplot(outer_grid[:, 0])
 ax.text(-0.275, 1.15, 'A', transform=ax.transAxes,
         color='black', fontweight='bold', fontsize=label_font, va='top')
 
-s = '../SPARK Project/Figure Data/Alpha_PSI_dose.csv'
+s = 'Figure Data/Alpha_PSI_dose.csv'
 t = pd.read_csv(s)
-s2 = '../SPARK Project/Figure Data/Delta_PSI_dose.csv'
+s2 = 'Figure Data/Delta_PSI_dose.csv'
 # s2 = 'All_Values.csv'
 t2 = pd.read_csv(s2)
 
 if direct:
-    s = '../SPARK Project/Figure Data/Volume_Direct_bottomleft.csv'
+    s = 'Figure Data/Volume_Direct_bottomleft.csv'
     bottomleft = pd.read_csv(s)
-    s = '../SPARK Project/Figure Data/Volume_Direct_bottomright.csv'
+    s = 'Figure Data/Volume_Direct_bottomright.csv'
     bottomright = pd.read_csv(s)
-    s = '../SPARK Project/Figure Data/Volume_Direct_topleft.csv'
+    s = 'Figure Data/Volume_Direct_topleft.csv'
     topleft = pd.read_csv(s)
-    s = '../SPARK Project/Figure Data/Volume_Direct_topright.csv'
+    s = 'Figure Data/Volume_Direct_topright.csv'
     topright = pd.read_csv(s)
 
 if indirect:
-    s = '../SPARK Project/Figure Data/Volume_Indirect_bottomleft.csv'
+    s = 'Figure Data/Volume_Indirect_bottomleft.csv'
     bottomleft = pd.read_csv(s)
-    s = '../SPARK Project/Figure Data/Volume_Indirect_bottomright.csv'
+    s = 'Figure Data/Volume_Indirect_bottomright.csv'
     bottomright = pd.read_csv(s)
-    s = '../SPARK Project/Figure Data/Volume_Indirect_topleft.csv'
+    s = 'Figure Data/Volume_Indirect_topleft.csv'
     topleft = pd.read_csv(s)
-    s = '../SPARK Project/Figure Data/Volume_Indirect_topright.csv'
+    s = 'Figure Data/Volume_Indirect_topright.csv'
     topright = pd.read_csv(s)
-    s = '../SPARK Project/Figure Data/k_Indirect_bottomleft.csv'
+    s = 'Figure Data/k_Indirect_bottomleft.csv'
     k_bottomleft = pd.read_csv(s)
-    s = '../SPARK Project/Figure Data/k_Indirect_bottomright.csv'
+    s = 'Figure Data/k_Indirect_bottomright.csv'
     k_bottomright = pd.read_csv(s)
-    s = '../SPARK Project/Figure Data/k_Indirect_topleft.csv'
+    s = 'Figure Data/k_Indirect_topleft.csv'
     k_topleft = pd.read_csv(s)
-    s = '../SPARK Project/Figure Data/k_Indirect_topright.csv'
+    s = 'Figure Data/k_Indirect_topright.csv'
     k_topright = pd.read_csv(s)
 
 cumul_direct = t.iloc[:, 4]
