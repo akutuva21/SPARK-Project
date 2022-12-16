@@ -1,8 +1,10 @@
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.PrintWriter;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Random;
+import java.lang.Math;
 // import java.util.Scanner;
 import java.text.DecimalFormat;
 
@@ -18,6 +20,14 @@ public class main2 {
         bw.close();
         pw.close();
         fw.close();
+    }
+
+    public static String round(String d, double place)
+    {
+        double d_new = Double.parseDouble(d);
+        double rounded = (int)(d_new * Math.pow(d_new, place)) / Math.pow(d_new, place);
+        System.out.println(rounded);
+        return String.valueOf(rounded);
     }
 
     static FileWriter fw = null;
@@ -46,18 +56,19 @@ public class main2 {
         boolean psi_check = false; // used in in-silico testing to see whether V ever exceeds K (Direct + Indirect case)
 
         /* direct and/or indirect cell kill enabled */
-        boolean direct = true; // boolean for direct cell kill
-        boolean indirect = !true; // boolean for indirect cell kill
+        boolean direct = !true; // boolean for direct cell kill
+        boolean indirect = true; // boolean for indirect cell kill
+        // boolean both = true; // adds both data to the same
 
-        boolean include_k = false; // Whether K values are stored (if modified over time)
+        boolean include_k = true; // Whether K values are stored (if modified over time)
         boolean include_psi = false; // Whether PSI values are stored (if modified over time)
-        boolean include_dv = false; // Whether changes are volume are stored over time (if modified over time)
+        boolean include_dv = true; // Whether changes are volume are stored over time (if modified over time)
 
         /* modes of testing */
         boolean robust_test = false; // Indicates whether robustness testing is being done
-        boolean spawn_random_pts = !true; // Creates random patients with pre-defined parameters (no filter except PSI)
+        boolean spawn_random_pts = false; // Creates random patients with pre-defined parameters (no filter except PSI)
         boolean random_selection = false; // Conducts random parameter selection in pre-defined experimental-derived ranges
-        boolean grid_search = !false; // Conducts a grid search to simulate patients based on parameter ranges defined in function
+        boolean grid_search = true; // Conducts a grid search to simulate patients based on parameter ranges defined in function
 
         ArrayList<Patient> allpts = new ArrayList<>(); // creates a blank arraylist (vector) of patient objects
 
@@ -105,7 +116,8 @@ public class main2 {
         }*/
 
         System.out.println("Direct is " + direct + ", Indirect is " + indirect);
-        System.out.println("Number of Patients: " + num_patients);
+        if (spawn_random_pts)
+            System.out.println("Number of Patients: " + num_patients);
         System.out.println("Starting...");
 
         if (robust_test) {
@@ -135,10 +147,42 @@ public class main2 {
         String extension = ".csv";
         writeToOutputFile("Lambda,Alpha,Delta,PSI,Dose,Size", filename + extension);
 
-        DecimalFormat df = new DecimalFormat("#.##");
-
+        DecimalFormat df_obj = new DecimalFormat("#.#####");
         for (Patient b : allpts)
-            writeToOutputFile(df.format(b.getlambda()) + "," + df.format(b.getalpha()) + "," + df.format(b.getdelta())
-                    + "," + df.format(b.getPSI()) + "," + df.format(b.getMinDose()) + "," + df.format(b.getFractionSize()), filename + extension);
+            writeToOutputFile(df_obj.format(b.getlambda()) + "," + df_obj.format(b.getalpha()) + "," +
+                    df_obj.format(b.getdelta()) + "," + df_obj.format(b.getPSI()) + ","
+                    + df_obj.format(b.getMinDose()) + "," + df_obj.format(b.getFractionSize()), filename + extension);
+        // Volume
+        if (include_dv) {
+            StringBuilder s = new StringBuilder();
+            s.append("Time").append(",");
+            ArrayList<Double> maxtime = allpts.get(0).getData().get(0);
+            int scale = (int) Math.pow(10, 2);
+            for (Patient p : allpts) {
+                if (direct) {
+                    p.setalpha((double) Math.round(p.getalpha() * scale) / scale);
+                    s.append("Lambda = ").append(p.getlambda()).append(" & Alpha = ").append(p.getalpha()).append(",");
+                } else if (indirect) {
+                    p.setdelta((double) Math.round(p.getdelta() * scale) / scale);
+                    s.append("Lambda = ").append(p.getlambda()).append(" & Delta = ").append(p.getdelta()).append(",");
+                } else
+                    s.append("Lambda = ").append(p.getlambda()).append(",");
+                if (p.getData().get(0).size() > maxtime.size())
+                    maxtime = p.getData().get(0);
+            }
+            writeToOutputFile(s.substring(0, s.length() - 1), "Volume_Data.csv");
+            if (include_k) {
+                for (int k = 0; k < maxtime.size(); k++) {
+                    s = new StringBuilder();
+                    s.append(maxtime.get(k)).append(",");
+                    for (Patient b : allpts)
+                        if (k < b.getData().get(1).size())
+                            s.append(b.getData().get(1).get(k)).append(",");
+                        else
+                            s.append(",");
+                    writeToOutputFile(s.substring(0, s.length() - 1), "Volume_Data.csv"); // Same as above (uncomment both to work)
+                }
+            }
+        }
     }
 }

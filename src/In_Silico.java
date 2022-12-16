@@ -29,19 +29,20 @@ public class In_Silico {
             frac_size.add(i);
         }
         ArrayList<Double> psi_gen = new ArrayList<>();
-        for (double i = 0.1; i <= 1; i += 0.02)
+        for (double i = 0.6; i <= 1; i += 0.02)
         {
             psi_gen.add(i);
         }
         Random r = new Random();
         r.setSeed(1);
-        numpatients = 500_000;
+        numpatients = 10000;
 
         int i = 0; // Tracks Patient #
         v0 = 100; // Assumes initial normalized tumor volume is at 100%
 
         ArrayList<Patient> allpts = new ArrayList<>();
-        while (i != numpatients) {
+        while (i != numpatients)
+        {
             ArrayList<ArrayList<Double>> data = new ArrayList<>();
             Patient p = new Patient();
             for (int n = 0; n < 5; n++)
@@ -49,20 +50,18 @@ public class In_Silico {
 
             // fraction_size = (double) Math.round(fraction_size * scale) / scale;
 
-            if (direct && !indirect)
-            {
+            if (direct && !indirect) {
                 //psi = In_Silico.next(r, 2.54/2.93, 2.19/2.93, 2.76/2.93, 1.62/2.93, 2.86/2.93);
-                psi = 2.54/2.93; // median psi
+                psi = 2.54 / 2.93; // median psi
                 lambda = 0.07; // constant lambda
                 alpha = 0.09; // constant alpha
             }
-            if (indirect && !direct)
-            {
+            if (indirect && !direct) {
                 //psi = In_Silico.next(r, 3.7/4.11, 3.03/4.11, 3.92/4.11, 2.27/4.11, 4.08/4.11);
-                psi = 3.7/4.11; // median psi
-                lambda = 0.49/3.72 * 0.6; // median lambda
+                psi = 3.7 / 4.11; // median psi
+                lambda = 0.49 / 3.72 * 0.6; // median lambda
                 //delta = In_Silico.next(r, 0.1 * 1.45/4.31, 0.1 * 0.95/4.31, 0.1 * 2.38/4.31, 0.1 * 0.31/4.31, 0.1 * 4.11/4.31);
-                delta = 0.1 * 1.45/4.31; // median delta
+                delta = 0.1 * 1.45 / 4.31; // median delta
             }
 
             alpha = 0.09;

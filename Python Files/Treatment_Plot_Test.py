@@ -33,7 +33,7 @@ numpts = 0
 # reduced = list(condition.index.values + 1)
 # t = t.iloc[:,reduced]
 
-num_to_plot = 2
+num_to_plot = 50
 # len(t.columns)
 for i in range(1, num_to_plot):
     c = 'g'
