@@ -5,7 +5,7 @@ from matplotlib import style, cm
 
 style.use('ggplot')
 
-s3 = r'C:\Users\coola\Desktop\Coding\SPARK-Project\All_Values.csv'
+s3 = 'All_Values.csv'
 t3 = pd.read_csv(s3)
 
 lam = t3.iloc[:, 0]

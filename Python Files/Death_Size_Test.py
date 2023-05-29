@@ -6,7 +6,7 @@ from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 
 style.use('default')
 
-s3 = 'SPARK Project/All_Values.csv'
+s3 = 'All_Values.csv'
 t3 = pd.read_csv(s3)
 fig, ax = plt.subplots()
 

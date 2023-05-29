@@ -1,3 +1,5 @@
+## Figure 2: Death Parameter Sweep (Alpha and Delta)
+
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt

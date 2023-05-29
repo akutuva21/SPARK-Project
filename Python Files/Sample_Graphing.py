@@ -1,3 +1,5 @@
+## Figure 1: Logistic Growth Model and Direct and Indirect Models
+
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -8,8 +10,11 @@ style.use('default')
 
 outer_grid = gridspec.GridSpec(1, 3, width_ratios=(2, 2, 2))
 fig = plt.figure(figsize=(15, 5))
-axs = [plt.subplot(outer_grid[:, 0]), plt.subplot(
-    outer_grid[:, 1]), plt.subplot(outer_grid[:, 2])]
+axs = [
+    plt.subplot(outer_grid[:, 0]),
+    plt.subplot(outer_grid[:, 1]),
+    plt.subplot(outer_grid[:, 2])
+]
 
 start_psi = 0.8
 start_psi = 1
@@ -74,31 +79,23 @@ for i in range(3):
     props2 = dict(boxstyle='square', facecolor='none',
                   edgecolor='none', pad=0.2)  # lightgray
 
-    # ax.axvspan(xmin, xmax, facecolor='lightgray', alpha=0.5)
-
-    # for time in np.arange(xmin, xmax, 1/7 * 1/24):
-    #     weekend = (int) (time * 24 * 7) % (24 * 7)
-    #     if weekend < 120:
-    #         ax.axvspan(time, time + 1/24, facecolor='white', alpha=0.5)
-
     ax.set_xticks(np.arange(0, xmax + 1, 1))
     ax.set_yticks(np.linspace(0, 100, 3))
 
     if i == 0:
-        title = 'Sample Logistic Growth'
         x_label = 'Time'
         y_label = 'Tumor Volume'
         ax.legend(loc='lower right', fontsize=20)
         ax.set_xticks([])
         ax.set_yticks([])
+
     else:
         x_val = [x/7 for x in range(0, 28) if x % 7 < 5]
         y_val = [105] * len(x_val)
         ax.scatter(x_val, y_val, marker=r'$\downarrow$', c='green',
                    s=300, linewidth=0.25, edgecolors='black', zorder=5)
 
-        title = 'Sample ' + \
-            ('Indirect' if indirect else 'Direct') + ' Cell Kill'
+        title = ('DVR' if direct else 'CCR') + ' Model'
         x_label = 'Time on RT (week)'
         y_label = '% Initial Tumor Volume'
 
@@ -122,8 +119,8 @@ for i in range(3):
             ax.text(0.05, 0.30, textstr_2, color='white', fontsize=15,
                     transform=ax.transAxes, verticalalignment='top',
                     bbox=props2, zorder=3)
+        ax.set_title(title, fontsize=20, pad=7.5)
 
-    ax.set_title(title, fontsize=20, pad=15)
     ax.set_xlabel(x_label, fontsize=20, labelpad=10)
     ax.set_ylabel(y_label, fontsize=20, labelpad=10)
     for axis in ['bottom', 'left']:
@@ -132,4 +129,14 @@ for i in range(3):
         ax.spines[axis].set_linewidth(0)
 
 plt.tight_layout()
+plt.subplots_adjust(top=0.8)
+axs[0].set_title('Logistic Tumor Growth', fontsize=20, pad=28, fontweight='bold')
+axs[0].text(-0.15, 1.2, 'A', fontsize=30, transform=axs[0].transAxes, fontweight='bold')
+
+# Add a subtitle between subplots 2 and 3
+subtitle_ax = fig.add_subplot(outer_grid[:, 1:])
+subtitle_ax.set_title('RT Response Models', fontsize=20, pad=28, fontweight='bold')
+subtitle_ax.text(-0.15, 1.2, 'B', fontsize=30, transform=subtitle_ax.transAxes, fontweight='bold')
+subtitle_ax.axis('off')
+
 plt.show()

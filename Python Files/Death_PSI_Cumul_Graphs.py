@@ -1,3 +1,5 @@
+## Figures 4/5: Death PSI Cumulative Graphs, Indirect -> Delta, Direct -> Alpha
+
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
@@ -8,7 +10,7 @@ style.use('default')
 fig = plt.figure(figsize=(6.8*2, 5))
 outer_grid = gridspec.GridSpec(2, 4, width_ratios=(2, 0.25, 1, 1), hspace=0.2)
 
-direct = not True
+direct = True
 indirect = not direct
 plot_width = 3
 font = 20
@@ -22,7 +24,6 @@ ax.text(-0.275, 1.15, 'A', transform=ax.transAxes,
 s = 'Figure Data/Alpha_PSI_dose.csv'
 t = pd.read_csv(s)
 s2 = 'Figure Data/Delta_PSI_dose.csv'
-# s2 = 'All_Values.csv'
 t2 = pd.read_csv(s2)
 
 if direct:
@@ -101,7 +102,6 @@ if indirect:
 cmap = cm.get_cmap('viridis_r')
 norm = colors.Normalize(min(cumul_direct.min(), cumul_indirect.min()), max(
     cumul_direct.max(), cumul_indirect.max()))
-# norm = colors.Normalize(num.min(), num.max())
 
 if indirect:
     manual_locations = [
@@ -154,10 +154,7 @@ for a in range(len(labels)):
         y2 = 0.905
     text = ax.text(x2[a], y2, labels[a], color='black',
                    fontweight='bold', fontsize=label_font if a > 0 else 20)
-
-# [0.005, -0.025]
-# plt.scatter(x, y, marker='X', c='black', s=400, linewidth=1.5,
-#             edgecolors='black')
+    
 plt.subplots_adjust(bottom=0.15)
 
 ##############################################################################
@@ -173,7 +170,6 @@ ax_list = [plt.subplot(outer_grid[0, 2]), plt.subplot(outer_grid[0, 3]),
 
 for val in range(len(read_files)):
     ax = ax_list[val]
-    # ax2 = ax.twiny()
     weeks = 5 if direct else 7
     scaling = 12 if direct else 11.375
 
@@ -198,11 +194,6 @@ for val in range(len(read_files)):
     ymin, ymax = ax.get_ylim()
     xmin, xmax = ax.get_xlim()
 
-    # for time in np.arange(xmin, xmax, 1/7 * 1/24):
-    #     weekend = (int) (time * 24 * 7) % (24 * 7)
-    #     if weekend < 120:
-    #         ax.axvspan(time, time + 1/24, facecolor='white', alpha=0.5)
-
     xrange = [x for x in np.arange(xmin, xmax + 1)]
     yrange = [0, 50, 100]
     new_ticks = [min(xrange), (min(xrange) + max(xrange)) / 2, max(xrange)]
@@ -225,34 +216,11 @@ for val in range(len(read_files)):
     ax.hlines((1 - threshold) * 100, 0, xmax, colors='k', linestyles='dotted',
               color='black', linewidth=plot_width, zorder=3)
 
-    '''
-    ax2.set_xlim([0, xmax])
-    xrange = [int(x) for x in np.arange(xmin, xmax, 1) if (x * 7) % (7) == 0]
-    new_ticks = [min(xrange), (min(xrange) + max(xrange)) / 2, max(xrange)]
-    ax2.set_xticks(new_ticks)
-    ax2.tick_params(axis='both', which='major', width = axis_width)
-    if (val != 2 and val != 3):
-        ax2.set_xticklabels(str(x * 2 * 5) for x in new_ticks)
-        ax2.tick_params(axis='both', which='major', labelsize = font, pad = 5)
-    else:
-        ax2.tick_params(labeltop=False)
-    for axis in ['bottom','left', 'top']:
-      ax.spines[axis].set_linewidth(axis_width)
-    '''
-
     for axis in ['bottom', 'left']:
         ax.spines[axis].set_linewidth(axis_thickness)
 
     for axis in ['right', 'top']:
         ax.spines[axis].set_linewidth(0)
-
-    '''
-    ax2.spines['top'].set_linewidth(axis_width)
-    ax2.spines['top'].set_linewidth(0)
-    ax2.spines['right'].set_linewidth(0)
-    for key, spine in ax2.spines.items():
-        spine.set_visible(False)
-    '''
 
     ax.text(0.10, 0.25, labels[val], transform=ax.transAxes,
             color='black', fontweight='bold', fontsize=label_font
@@ -305,25 +273,11 @@ for val in range(len(read_files)):
                     transform=ax.transAxes, color='black', fontweight='bold',
                     fontsize=15, va='top')
 
-    # if indirect:
-    #     ax.text(0.15, 0.25, labels[val], transform=ax.transAxes,
-    #       color='black', fontweight = 'bold', fontsize=30, va='top')
-    # if direct:
-    #     if val < 2:
-    #         ax.text(0.15, 0.25, labels[val], transform=ax.transAxes,
-    #           color='black', fontweight = 'bold', fontsize=30, va='top')
-    #     else:
-    #         ax.text(0.85, 0.25, labels[val], transform=ax.transAxes,
-    #           color='black', fontweight = 'bold', fontsize=30, va='top')
-
 ax = fig.add_subplot(outer_grid[:, 2:])
 ax.text(-0.20, 1.15, 'B', transform=ax.transAxes,
         color='black', fontweight='bold', fontsize=label_font, va='top')
-# ax.set_xlabel('Time on RT (Weeks)', fontsize = font, labelpad = 40)
-ax.set_ylabel('% Initial Tumor Volume', fontsize=font, labelpad=50)
-# ax2 = ax.twiny()
 ax.set_xlabel('Cumulative Dose (Gy)', fontsize=font, labelpad=40)
-# axs = [ax, ax2]
+ax.set_ylabel('% Initial Tumor Volume', fontsize=font, labelpad=50)
 axs = [ax]
 for ax in axs:
     ax.set_xticks([])

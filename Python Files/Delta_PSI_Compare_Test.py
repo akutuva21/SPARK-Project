@@ -8,7 +8,7 @@ style.use('ggplot')
 
 threshold = 0.322
 
-s3 = 'SPARK Project/All_Values.csv'
+s3 = 'All_Values.csv'
 t3 = pd.read_csv(s3)
 
 lam = t3.iloc[:, 0]

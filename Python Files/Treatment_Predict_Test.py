@@ -4,18 +4,39 @@ import numpy as np
 import matplotlib.patches as mpatches
 # from matplotlib import cm
 from matplotlib import style
+import csv
 
 style.use('default')
 
-# psi = 0.9
 threshold = 0.322
 
-s = 'Volume_Data.csv'
-t = pd.read_csv(s)
-s2 = 'k_vals.csv'
-t2 = pd.read_csv(s2)
+files = ['Volume_Data', 'k_vals']
+for f in files:
+    # Read the CSV file
+    with open(f + '.csv', 'r') as file:
+        reader = csv.reader(file)
+        data = list(reader)
+
+    # Transpose the data
+    transposed_data = list(zip(*data))
+
+    # Write the transposed data to a new CSV file
+    with open(f + '_Transposed.csv', 'w', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerows(transposed_data)
+
+s = 'Volume_Data_Transposed.csv'
+t =  pd.read_csv(s)
+s2 = 'k_vals_Transposed.csv'
+t2 =  pd.read_csv(s2)
 s3 = 'All_Values.csv'
-t3 = pd.read_csv(s3)
+t3 = pd.read_csv(s3, header=0)
+t3 = t3.apply(pd.to_numeric, errors='coerce')
+
+print(t, t2, t3)
+# print the last row of t
+print(t.iloc[-1, :])
+
 fig, ax = plt.subplots()
 
 lam = t3.iloc[:, 0]
@@ -50,9 +71,9 @@ green_patch = mpatches.Patch(color='g', label='Locoregional Control')
 red_patch = mpatches.Patch(color='r', label='Locoregional Failure')
 
 ax.set_xlabel('Time', fontsize=20, labelpad=15)
-ax.set_ylabel('Tumor Volume', fontsize=20, labelpad=15)
+ax.set_ylabel('Normalized Tumor Volume', fontsize=20, labelpad=15, fontweight=2)
 plt.xlim((0, 7))
-plt.ylim((0, 100))
+plt.ylim((0, 1000))
 ymin, ymax = ax.get_ylim()
 xmin, xmax = ax.get_xlim()
 ax.set_aspect(xmax / ymax)
@@ -77,10 +98,8 @@ ax.tick_params(width=2)
 
 fig.set_size_inches(6.8, 5, forward=True)
 plt.tight_layout()
-plt.show()
-# plt.ylabel('Normalized Tumor Volume', fontsize = 25,
-#            fontweight = 2, labelpad = 12)
-# plt.legend(handles=[green_patch, red_patch], fontsize = 20,
-#            loc='upper right')
+plt.legend(handles=[green_patch, red_patch], fontsize = 20,
+            loc='upper right')
 # ax.set_aspect(1/20)
-# plt.legend(fontsize = 12)
+plt.legend(fontsize = 12)
+plt.show()

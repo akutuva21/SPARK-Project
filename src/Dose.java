@@ -68,13 +68,21 @@ public class Dose {
             boolean lq = !true; // Assumes a linear-quadratic relation between fraction size and delta
             boolean no_change = true; // Assumes no relation between fraction size and delta
 
-            if (direct)
+            if (direct & indirect)
+            {
+                System.out.println("This is a mistake, please double check something");
+                psi = 0;
+                lambda = 0;
+                alpha = 0;
+                delta = 0;
+            }
+            else if (direct)
             {
                 psi = next(r, 2.54/2.93, 2.19/2.93, 2.76/2.93, 1.62/2.93, 2.86/2.93);
                 lambda = 0.07;
                 alpha = Math.abs(r.nextGaussian() * 0.02 + 0.09);
             }
-            if (indirect)
+            else if (indirect)
             {
                 psi = next(r, 3.7/4.11, 3.03/4.11, 3.92/4.11, 2.27/4.11, 4.08/4.11);
                 lambda = next(r, 0.49/3.72 * 0.6, 0.31/3.72 * 0.6, 0.93/3.72 * 0.6, 0.31/3.72 * 0.6, 1.31/3.72 * 0.6);
@@ -127,45 +135,66 @@ public class Dose {
 
     public static void gridSearch(ArrayList<Patient> allpts, ArrayList<Double> hour, boolean direct, boolean indirect, boolean pretreat, boolean psi_check, boolean include_k, boolean include_psi, boolean include_dv) {
         double psi; double alpha = 0; double delta = 0;
-        double lambda = 0.07; // constant growth rate
+        // double lambda = 0.07; // constant growth rate
+        double[] lambda_range = {
+                0.0,
+                0.01
+        }; // Develops a range of alpha values to be tested
         double[] alpha_range = {
                 0.07,
                 0.11
         }; // Develops a range of alpha values to be tested
+        alpha_range = new double[]{0.1};
         double[] delta_range = {
                 0.01,
                 0.09
         }; // Develops a range of delta values to be tested
+        delta_range = new double[]{0.1};
         double[] psi_range = {
                 0.6,
                 1
         }; // Develops a range of PSI values to be tested
+        psi_range = new double[]{0.9};
         double[] frac_range = {
                 0.1,
                 30
         }; // Develops a range of fraction sizes to be tested
+        // frac_range = new double[]{2};
 
-        double incr; // Determines level of incrementation in values for direct/indirect cell kill
-        if (direct) incr = 0.02;
-        else incr = 0.005;
+        double a_incr = 0.02; // Determines level of incrementation in values for direct cell kill
+        double d_incr = 0.005; // Determines level of incrementation in values for indirect cell kill
+        double l_incr = 0.001; // Determines level of incrementation for growth rate
         double psi_incr = 0.02;
         double frac_iter = 0.1;
 
-        double[] range;
-        if (direct) range = alpha_range;
-        else range = delta_range;
+        if (direct && indirect) {
+            System.out.println("This should not be active but if so, this is just confirming that both direct" +
+                    " and indirect cell kill are active.");
+        } else if (direct) {
+            delta_range = new double[0];
+        } else if (indirect) {
+            alpha_range = new double[0];
+        } else {
+            // Neither direct nor indirect is true
+            alpha_range = new double[0];
+            delta_range = new double[0];
+        }
 
-        for (double x = range[0]; x <= range[1] + 0.0001; x += incr) {
-            if (indirect) delta = x;
-            if (direct) alpha = x;
-            for (psi = psi_range[0]; psi <= psi_range[1]; psi += psi_incr) {
-                for (double f = frac_range[0]; f <= frac_range[1]; f += frac_iter) {
-                    Patient a = new Patient();
-                    ArrayList<ArrayList<Double>> data = new ArrayList<>();
-                    for (int n = 0; n < 5; n++)
-                        data.add(new ArrayList<>()); // time, volume, k_vals, psi_vals, dv_vals
+        for (double a = alpha_range[0]; a <= alpha_range[alpha_range.length - 1] + 0.000001; a += a_incr) {
+            for (double d = delta_range[0]; d <= delta_range[delta_range.length - 1] + 0.000001; d += d_incr) {
+                if (direct) alpha = a;
+                if (indirect) delta = d;
+                for (double lambda = lambda_range[0]; lambda <= lambda_range[lambda_range.length - 1] + 0.000001; lambda += l_incr) {
+                    for (psi = psi_range[0]; psi <= psi_range[psi_range.length - 1] + 0.000001; psi += psi_incr) {
+                        for (double f = frac_range[0]; f <= frac_range[frac_range.length - 1] + 0.000001; f += frac_iter) {
+                            Patient p = new Patient();
+                            ArrayList<ArrayList<Double>> data = new ArrayList<>();
+                            for (int n = 0; n < 5; n++)
+                                data.add(new ArrayList<>()); // time, volume, k_vals, psi_vals, dv_vals
 
-                    doseHelper(allpts, a, hour, data, psi, alpha, delta, lambda, f, direct, indirect, pretreat, psi_check, include_k, include_psi, include_dv);
+                            doseHelper(allpts, p, hour, data, psi, alpha, delta, lambda, f, direct, indirect, pretreat, psi_check, include_k, include_psi, include_dv);
+                        }
+                    }
                 }
             }
         }
@@ -183,6 +212,8 @@ public class Dose {
             data.get(2).add(k);
         if (include_psi)
             data.get(3).add(psi);
+        if (include_dv)
+            data.get(4).add(v0);
         double end = v0;
         if (pretreat) {
             end = getPretreat(data, lambda, include_k, include_psi, include_dv, k); // conducts pretreatment if needed
