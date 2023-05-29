@@ -8,7 +8,7 @@ import java.util.Random;
 import java.lang.Math;
 // import java.util.Scanner;
 
-public class main2 {
+public class ModelComparison {
 
     public static String round(String d, double place)
     {

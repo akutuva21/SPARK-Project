@@ -1,4 +1,3 @@
-import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Random;
 
@@ -109,7 +108,7 @@ public class Dose {
                     double v = -Math.exp(x) * y - y + Math.exp(x) - 1;
                     double sqrt = Math.sqrt(-2 * Math.exp(x) * Math.pow(y, 2) + Math.exp(2 * x) * Math.pow(y, 2) + Math.pow(y, 2) - 2 * Math.exp(2 * x) * y + 2 * y - 2 * Math.exp(x) + Math.exp(2 * x) + 1);
                     double C1 = (v + sqrt) / (2 * y); // c1 = 181.48
-                    double C2 = (v - sqrt) / (2 * y); // c2 = 0.041
+                    // double C2 = (v - sqrt) / (2 * y); // c2 = 0.041
 
                     delta = Math.exp(fraction_size) / (Math.exp(fraction_size) + C1) - 1/(1 + C1);
                     lambda = 0.49/3.72 * 0.6; // median lambda

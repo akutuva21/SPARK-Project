@@ -13,10 +13,11 @@ public class Robust {
     // Used for reading patient volume data in a given format (see patientdata.csv - patient #, time, volume)
     public static ArrayList<ArrayList<Double>> readData(String file) throws IOException {
         ArrayList<String[]> content = new ArrayList<>();
-        BufferedReader br = new BufferedReader(new FileReader(file));
-        String line;
-        while ((line = br.readLine()) != null) {
-            content.add(line.split(","));
+        try (BufferedReader br = new BufferedReader(new FileReader(file))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                content.add(line.split(","));
+            }
         }
         ArrayList<ArrayList<Double>> converted = new ArrayList<>();
         for (String[] val : content) {

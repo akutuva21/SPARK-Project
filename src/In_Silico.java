@@ -21,7 +21,7 @@ public class In_Silico {
         double abratio = 10; // ratio of alpha / beta used in finding gamma variable
         // double mu = 1.0; // unused
 
-        int scale = (int) Math.pow(10, 1); // Used for rounding
+        // int scale = (int) Math.pow(10, 1); // Used for rounding
 
         ArrayList<Double> frac_size = new ArrayList<>();
         for (double i = 0.1; i <= 30; i += 0.1)
