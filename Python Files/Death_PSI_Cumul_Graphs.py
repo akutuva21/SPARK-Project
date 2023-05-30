@@ -21,37 +21,39 @@ ax = plt.subplot(outer_grid[:, 0])
 ax.text(-0.275, 1.15, 'A', transform=ax.transAxes,
         color='black', fontweight='bold', fontsize=label_font, va='top')
 
-s = 'Figure Data/Alpha_PSI_dose.csv'
+directory = 'Figure Data/Figures 4 and 5/'
+
+s = directory + 'Alpha_PSI_dose.csv'
 t = pd.read_csv(s)
-s2 = 'Figure Data/Delta_PSI_dose.csv'
+s2 = directory + 'Delta_PSI_dose.csv'
 t2 = pd.read_csv(s2)
 
 if direct:
-    s = 'Figure Data/Volume_Direct_bottomleft.csv'
+    s = directory + 'Volume_Direct_bottomleft.csv'
     bottomleft = pd.read_csv(s)
-    s = 'Figure Data/Volume_Direct_bottomright.csv'
+    s = directory + 'Volume_Direct_bottomright.csv'
     bottomright = pd.read_csv(s)
-    s = 'Figure Data/Volume_Direct_topleft.csv'
+    s = directory + 'Volume_Direct_topleft.csv'
     topleft = pd.read_csv(s)
-    s = 'Figure Data/Volume_Direct_topright.csv'
+    s = directory + 'Volume_Direct_topright.csv'
     topright = pd.read_csv(s)
 
 if indirect:
-    s = 'Figure Data/Volume_Indirect_bottomleft.csv'
+    s = directory + 'Volume_Indirect_bottomleft.csv'
     bottomleft = pd.read_csv(s)
-    s = 'Figure Data/Volume_Indirect_bottomright.csv'
+    s = directory + 'Volume_Indirect_bottomright.csv'
     bottomright = pd.read_csv(s)
-    s = 'Figure Data/Volume_Indirect_topleft.csv'
+    s = directory + 'Volume_Indirect_topleft.csv'
     topleft = pd.read_csv(s)
-    s = 'Figure Data/Volume_Indirect_topright.csv'
+    s = directory + 'Volume_Indirect_topright.csv'
     topright = pd.read_csv(s)
-    s = 'Figure Data/k_Indirect_bottomleft.csv'
+    s = directory + 'k_Indirect_bottomleft.csv'
     k_bottomleft = pd.read_csv(s)
-    s = 'Figure Data/k_Indirect_bottomright.csv'
+    s = directory + 'k_Indirect_bottomright.csv'
     k_bottomright = pd.read_csv(s)
-    s = 'Figure Data/k_Indirect_topleft.csv'
+    s = directory + 'k_Indirect_topleft.csv'
     k_topleft = pd.read_csv(s)
-    s = 'Figure Data/k_Indirect_topright.csv'
+    s = directory + 'k_Indirect_topright.csv'
     k_topright = pd.read_csv(s)
 
 cumul_direct = t.iloc[:, 4]
@@ -136,7 +138,7 @@ for axis in ['top', 'right']:
 ax.tick_params(width=axis_thickness)
 
 sm = plt.cm.ScalarMappable(norm=norm, cmap=cmap)
-cb = plt.colorbar(sm, aspect=30)
+cb = plt.colorbar(sm, aspect=30, ax=ax)
 cb.ax.set_ylabel('Cumulative Dose (Gy)', labelpad=15, fontsize=font)
 cb.ax.tick_params(axis='both', which='major', labelsize=font)
 

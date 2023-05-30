@@ -7,7 +7,7 @@ t = pd.read_csv(str(s))
 
 fig = plt.figure()
 ax = fig.add_subplot(projection='3d')
-fig.suptitle('Something', fontsize=20)
+fig.suptitle('Testing', fontsize=20)
 plt.xlabel('Alpha', fontsize=18)
 plt.ylabel('Cumulative Dose', fontsize=16)
 plt.xticks(fontsize=15)

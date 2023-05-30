@@ -22,7 +22,7 @@ threshold = 0.322
 x = 1
 axis_thickness = 3
 
-directory = 'Paper Edited Figures/Figure 1/'
+directory = 'Figure Data/Figure 1/'
 
 a1 = directory + 'Logistic_Volume.csv'
 b1 = directory + 'Logistic_k.csv'

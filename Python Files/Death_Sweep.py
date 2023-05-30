@@ -7,10 +7,11 @@ from matplotlib import style, cm, colors
 import matplotlib.gridspec as gridspec
 
 style.use('default')
+directory = 'Figure Data/Figure 2/'
 
-s = 'Param Sweep New/l=0.1,psi=0.9,a fixed.csv'
+s = directory + 'l=0.1,psi=0.9,a fixed.csv'
 t = pd.read_csv(str(s))
-s2 = 'Param Sweep New/l=0.1,psi=0.9,d fixed.csv'
+s2 = directory + 'l=0.1,psi=0.9,d fixed.csv'
 t2 = pd.read_csv(str(s2))
 
 read_data = [t, t2]

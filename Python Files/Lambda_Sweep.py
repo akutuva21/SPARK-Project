@@ -10,18 +10,19 @@ from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 from mpl_toolkits.axes_grid1.inset_locator import mark_inset
 
 style.use('default')
+directory = 'Figure Data/Figure 3/'
 
 start_psi = 0.8
 axis_thickness = 3
 
-sweep1 = 'Figure Data/lam_sweep_direct_psi_0.7.csv'
+sweep1 = directory + 'lam_sweep_direct_psi_0.7.csv'
 t = pd.read_csv(str(sweep1))
-sweep2 = 'Figure Data/lam_sweep_indirect_psi_0.7.csv'
+sweep2 = directory + 'lam_sweep_indirect_psi_0.7.csv'
 t2 = pd.read_csv(str(sweep2))
 
-sweep3 = 'Figure Data/lam_sweep_direct_psi_0.7_k.csv'
+sweep3 = directory + 'lam_sweep_direct_psi_0.7_k.csv'
 k = pd.read_csv(sweep3)
-sweep4 = 'Figure Data/lam_sweep_indirect_psi_0.7_k.csv'
+sweep4 = directory + 'lam_sweep_indirect_psi_0.7_k.csv'
 k2 = pd.read_csv(sweep4)
 
 min_val, max_val = 0, 0.5

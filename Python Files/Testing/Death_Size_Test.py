@@ -7,7 +7,8 @@ from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 style.use('default')
 
 s3 = 'All_Values.csv'
-t3 = pd.read_csv(s3)
+t3 = pd.read_csv(s3, header=0)
+t3 = t3.apply(pd.to_numeric, errors='coerce')
 fig, ax = plt.subplots()
 
 lam = t3.iloc[:, 0]
