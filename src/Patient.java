@@ -4,7 +4,7 @@ import java.util.ArrayList;
 public class Patient {
     private double lambda; // Patient-specific tumor growth rate
     private double alpha; // Alpha value in linear-quadratic model of cell death
-    private double mu; // Scaling factor for proliferation saturation, Currently unused
+    // private double mu; // Scaling factor for proliferation saturation, Currently unused
     private double delta; // Death term, influenced by alpha and alpha-beta ratio
     private double alpha_beta_ratio; // Ratio of Alpha and Beta terms in linear-quadratic model of cell death
     private double fraction_size; // Size of each fraction at each administration
@@ -50,7 +50,7 @@ public class Patient {
     }
 
     // Setter function for mu variable (unused)
-    public void setmu(double mu) { this.mu = mu; }
+    // public void setmu(double mu) { this.mu = mu; }
 
     // Getter function for delta variable
     public double getdelta()
