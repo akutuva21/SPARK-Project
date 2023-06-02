@@ -374,7 +374,6 @@ public class ModelComparison {
         psi_incr = 0;
         frac_incr = 0;
         values_name = "";
-        k_name = "";
         lambda_range = new double[]{0.07};
 
         // top left, top right, bottom right, bottom left

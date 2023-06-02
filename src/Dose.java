@@ -1,9 +1,7 @@
 import java.util.ArrayList;
-import java.util.Random;
 
 // Stores general dose and other fractionation-related values
 public class Dose {
-    private static final double fraction_size = 2; // // Assumes a fraction size of 2 Gy
     private static final double percent_decr = 1 - 0.322; // Assumes a 32.2% decrease in tumor volume is needed to achieve LRC
     static double v0 = 100; // Assumes initial normalized tumor volume is at 100%
     private static final double ab_ratio = 10; // constant ratio of alpha / beta in gamma calculation
@@ -13,6 +11,12 @@ public class Dose {
     private static final double pretreat_time = 7; // Assumes a week between pretreatment scans and start of treatment
 
     // Checks if the given time is found in the array of fractionation times
+    /**
+     * @param t
+     * @param delta_t
+     * @param hour
+     * @return
+     */
     public static boolean ArrayCheck(double t, double delta_t, ArrayList<Double> hour) {
         for (double h : hour)
         {
@@ -24,114 +28,27 @@ public class Dose {
         return false;
     }
 
-    // Samples values from a boxplot distribution given q1, median, q3, min, and max
-    // Taken from https://stackoverflow.com/a/28962994
-    static public double next(Random rnd, double median, double q1, double q3, double min, double max)
-    {
-        double d = -3;
-        while (d > 2.698 || d < -2.698) { // excludes values outside of range
-            d = rnd.nextGaussian();
-        }
-        if (Math.abs(d) < 0.6745) {
-            if (d < 0) {
-                return median - (median - q1) / 0.6745 * (-d);  // 2nd quartile
-            } else {
-                return median + (q3 - median) / 0.6745 * d;  // 3rd quartile
-            }
-        } else {
-            if (d < 0) {
-                return q1 - (q1 - min) / (2.698 - 0.6745) * ((-d) - 0.6745);  // 1st quartile
-            } else {
-                return q3 + (max - q3) / (2.698 - 0.6745) * (d - 0.6745);  // 4th quartile
-            }
-        }
-    }
-
-    // Continues setting up patients and filters based on cumulative dose criteria, conducts pretreatment if indicated
-    public static void cumulDose(ArrayList<Patient> allpts, int numpatients, ArrayList<Double> hour, boolean direct, boolean indirect, boolean pretreat, boolean psi_check, Random r, boolean include_k, boolean include_psi, boolean include_dv, boolean lrc_filter, boolean dose_filter, boolean time_filter)
-    {
-        double psi = -1; double lambda = 0; double alpha = 0; double delta = 0;
-        int i = 0; // Tracks Patient #
-        
-        while (i != numpatients) {
-            int size = allpts.size(); // tracks current number of patients created
-            ArrayList<ArrayList<Double>> data = new ArrayList<>();
-            Patient p = new Patient();
-
-            for (int n = 0; n < 5; n++)
-                data.add(new ArrayList<>()); // appends time, volume, k_vals, psi_vals, dv_vals vectors
-            p.setCumulDose(max_dose);
-
-            boolean linear = !true; // Assumes a linear relation between fraction size and delta
-            boolean logistic = !true; // Assumes a logistic relation between fraction size and delta
-            boolean lq = !true; // Assumes a linear-quadratic relation between fraction size and delta
-            boolean no_change = true; // Assumes no relation between fraction size and delta
-
-            if (direct & indirect)
-            {
-                System.out.println("This is a mistake, please double check something");
-                psi = 0;
-                lambda = 0;
-                alpha = 0;
-                delta = 0;
-            }
-            else if (direct)
-            {
-                psi = next(r, 2.54/2.93, 2.19/2.93, 2.76/2.93, 1.62/2.93, 2.86/2.93);
-                lambda = 0.07;
-                alpha = Math.abs(r.nextGaussian() * 0.02 + 0.09);
-            }
-            else if (indirect)
-            {
-                psi = next(r, 3.7/4.11, 3.03/4.11, 3.92/4.11, 2.27/4.11, 4.08/4.11);
-                lambda = next(r, 0.49/3.72 * 0.6, 0.31/3.72 * 0.6, 0.93/3.72 * 0.6, 0.31/3.72 * 0.6, 1.31/3.72 * 0.6);
-
-                if (no_change)
-                {
-                    lambda = 0.49/3.72 * 0.6; // median lambda
-                    delta = next(r, 0.1 * 1.45/4.31, 0.1 * 0.95/4.31, 0.1 * 2.38/4.31, 0.1 * 0.31/4.31, 0.1 * 4.11/4.31);
-                }
-                else if (linear)
-                {
-                    //delta = next(r, 0.1 * 1.45/4.31, 0.1 * 0.95/4.31, 0.1 * 2.38/4.31, 0.1 * 0.31/4.31, 0.1 * 4.11/4.31);
-                    delta = 0.1 * 1.45/4.31;
-
-                    double ratio = 2.0 / delta; // median delta at 2 Gy
-                    lambda = 0.49/3.72 * 0.6; // median lambda
-                    delta = fraction_size / ratio; // scales delta based on the provided fraction size
-                }
-                else if (logistic)
-                {
-                    double y = 0.1 * 1.45/4.31; // median delta
-                    double x = 2; // dose (x)
-                    // C derived from inverse of logistic equation (delta = e^d / (e^d + c) - 1 / (1 + c))
-                    double v = -Math.exp(x) * y - y + Math.exp(x) - 1;
-                    double sqrt = Math.sqrt(-2 * Math.exp(x) * Math.pow(y, 2) + Math.exp(2 * x) * Math.pow(y, 2) + Math.pow(y, 2) - 2 * Math.exp(2 * x) * y + 2 * y - 2 * Math.exp(x) + Math.exp(2 * x) + 1);
-                    double C1 = (v + sqrt) / (2 * y); // c1 = 181.48
-                    // double C2 = (v - sqrt) / (2 * y); // c2 = 0.041
-
-                    delta = Math.exp(fraction_size) / (Math.exp(fraction_size) + C1) - 1/(1 + C1);
-                    lambda = 0.49/3.72 * 0.6; // median lambda
-                }
-                else if (lq)
-                {
-                    double ab_ratio = 10;
-
-                    delta = 0.1 * 1.45/4.31;
-                    double ref_dose = 2;
-                    double a = Math.log(1 - delta) / (-ref_dose - Math.pow(ref_dose, 2) / ab_ratio);
-                    delta = 1 - Math.exp(-a * fraction_size - (a/ab_ratio) * Math.pow(fraction_size, 2));
-                    lambda = 0.49/3.72 * 0.6; // median lambda
-                }
-
-                // delta = 0.07;
-                // psi = 0.7;
-            }
-            doseHelper(allpts, p, hour, data, psi, alpha, delta, lambda, fraction_size, direct, indirect, pretreat, psi_check, dose_filter, include_k, include_psi, include_dv, lrc_filter, time_filter);
-            if (allpts.size() == (size + 1)) i++;
-        }
-    }
-
+    /**
+     * @param allpts
+     * @param hour
+     * @param direct
+     * @param indirect
+     * @param pretreat
+     * @param psi_check
+     * @param include_k
+     * @param include_psi
+     * @param include_dv
+     * @param lrc_filter
+     * @param dose_filter
+     * @param time_filter
+     * @param volume_start
+     * @param lambda_range
+     * @param alpha_range
+     * @param delta_range
+     * @param psi_range
+     * @param frac_range
+     * @param incr_range
+     */
     public static void gridSearch(ArrayList<Patient> allpts, ArrayList<Double> hour, boolean direct, boolean indirect, boolean pretreat, boolean psi_check, boolean include_k, boolean include_psi, boolean include_dv, boolean lrc_filter, boolean dose_filter, boolean time_filter, boolean volume_start, double[] lambda_range, double[] alpha_range, double[] delta_range, double[] psi_range, double[] frac_range, double[] incr_range) {
         double alpha = 0; double delta = 0;
         if (direct && indirect) {
@@ -177,6 +94,27 @@ public class Dose {
     }
 
     // Helper function to cumulDose function and Grid Search
+    /**
+     * @param allpts
+     * @param a
+     * @param hour
+     * @param data
+     * @param psi
+     * @param alpha
+     * @param delta
+     * @param lambda
+     * @param fraction_size
+     * @param direct
+     * @param indirect
+     * @param pretreat
+     * @param psi_check
+     * @param include_k
+     * @param include_psi
+     * @param include_dv
+     * @param lrc_filter
+     * @param dose_filter
+     * @param time_filter
+     */
     public static void doseHelper(ArrayList<Patient> allpts, Patient a, ArrayList<Double> hour, ArrayList<ArrayList<Double>> data, double psi, double alpha, double delta, double lambda, double fraction_size, boolean direct, boolean indirect, boolean pretreat, boolean psi_check, boolean include_k, boolean include_psi, boolean include_dv, boolean lrc_filter, boolean dose_filter, boolean time_filter)
     {
         double k = v0 / psi; // calculates k
@@ -195,10 +133,10 @@ public class Dose {
             end = getPretreat(data, lambda, include_k, include_psi, include_dv, k); // conducts pretreatment if needed
         }
 
-        double cumul_dose = doseCheck(k, end, lambda, gamma, delta, fraction_size, max_dose, indirect, direct, pretreat, hour, data, percent_decr, include_k, include_psi, include_dv, psi_check, lrc_filter, dose_filter, time_filter);
+        double cumul_dose = doseCheck(k, end, lambda, gamma, delta, fraction_size, indirect, direct, pretreat, hour, data, percent_decr, include_k, include_psi, include_dv, psi_check, lrc_filter, dose_filter, time_filter);
         if (!(cumul_dose == -1)) // filters LRC (8 weeks of treatment or while number of doses <= maximum dose / fraction size) and PSI exceeding one
         {
-            initializePatient(fraction_size, v0, lambda, alpha, delta, data, a, k, cumul_dose, max_dose);
+            initializePatient(fraction_size, v0, lambda, alpha, delta, data, a, k, cumul_dose);
             if (allpts.size() % 100.0 == 0.0 && allpts.size() > 1)
                 System.out.println("Completed: " + allpts.size());
             allpts.add(a);
@@ -206,11 +144,21 @@ public class Dose {
     }
 
     // Initializes a given patient with provided values
-    public static void initializePatient(double fraction_size, double v0, double lambda, double alpha, double delta, ArrayList<ArrayList<Double>> data, Patient p, double k, double cumul_dose, double max_dose) {
+    /**
+     * @param fraction_size
+     * @param v0
+     * @param lambda
+     * @param alpha
+     * @param delta
+     * @param data
+     * @param p
+     * @param k
+     * @param cumul_dose
+     */
+    public static void initializePatient(double fraction_size, double v0, double lambda, double alpha, double delta, ArrayList<ArrayList<Double>> data, Patient p, double k, double cumul_dose) {
         p.setK(k);
-        p.setV0(v0);
         p.setPSI(v0, k);
-        p.setCumulDose(max_dose);
+        p.setCumulDose();
         p.setMinDose(cumul_dose);
         p.setData(data);
         p.setlambda(lambda);
@@ -220,6 +168,15 @@ public class Dose {
     }
 
     // Conducts pretreatment for a period of "pretreat_time" days if required
+    /**
+     * @param data
+     * @param lambda
+     * @param include_k
+     * @param include_psi
+     * @param include_dv
+     * @param k
+     * @return
+     */
     public static double getPretreat(ArrayList<ArrayList<Double>> data, double lambda, boolean include_k, boolean include_psi, boolean include_dv, double k) {
         double end = k / (1 + ((k / v0) - 1) * Math.exp(-lambda * pretreat_time));
         data.get(0).add(pretreat_time);
@@ -234,11 +191,33 @@ public class Dose {
     }
 
     // Simulates treatment accounting for LRC (8 weeks of treatment or while number of doses <= maximum dose / fraction size)
+    /**
+     * @param k
+     * @param end
+     * @param lambda
+     * @param gamma
+     * @param delta
+     * @param fraction_size
+     * @param indirect
+     * @param direct
+     * @param pretreat
+     * @param hour
+     * @param data
+     * @param percent_dec
+     * @param include_k
+     * @param include_psi
+     * @param include_dv
+     * @param psi_check
+     * @param lrc_filter
+     * @param dose_filter
+     * @param time_filter
+     * @return
+     */
     public static double doseCheck(double k, double end, double lambda, double gamma, double delta, double fraction_size,
-                                   double cumul_dose, boolean indirect, boolean direct, boolean pretreat,
-                                   ArrayList<Double> hour, ArrayList<ArrayList<Double>> data, double percent_dec,
-                                   boolean include_k, boolean include_psi, boolean include_dv, boolean psi_check,
-                                   boolean lrc_filter, boolean dose_filter, boolean time_filter) {
+                                   boolean indirect, boolean direct, boolean pretreat, ArrayList<Double> hour,
+                                   ArrayList<ArrayList<Double>> data, double percent_dec, boolean include_k,
+                                   boolean include_psi, boolean include_dv, boolean psi_check, boolean lrc_filter,
+                                   boolean dose_filter, boolean time_filter) {
         double t = 0;
         int numdoses = 0;
         double start = end;
@@ -292,8 +271,3 @@ public class Dose {
         return -1;
     }
 }
-
-    /* // Function to approximate values near zero given a value f (actual - expected) and an epsilon range for error
-    static boolean nearZero(double f, double epsilon) {
-        return ((-epsilon < f) && (f < epsilon));
-    } */
