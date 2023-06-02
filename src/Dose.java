@@ -48,7 +48,7 @@ public class Dose {
     }
 
     // Continues setting up patients and filters based on cumulative dose criteria, conducts pretreatment if indicated
-    public static void cumulDose(ArrayList<Patient> allpts, int numpatients, ArrayList<Double> hour, boolean direct, boolean indirect, boolean pretreat, boolean psi_check, Random r, boolean include_k, boolean include_psi, boolean include_dv)
+    public static void cumulDose(ArrayList<Patient> allpts, int numpatients, ArrayList<Double> hour, boolean direct, boolean indirect, boolean pretreat, boolean psi_check, Random r, boolean include_k, boolean include_psi, boolean include_dv, boolean lrc_filter, boolean dose_filter, boolean time_filter)
     {
         double psi = -1; double lambda = 0; double alpha = 0; double delta = 0;
         int i = 0; // Tracks Patient #
@@ -127,50 +127,18 @@ public class Dose {
                 // delta = 0.07;
                 // psi = 0.7;
             }
-            doseHelper(allpts, p, hour, data, psi, alpha, delta, lambda, fraction_size, direct, indirect, pretreat, psi_check, include_k, include_psi, include_dv);
+            doseHelper(allpts, p, hour, data, psi, alpha, delta, lambda, fraction_size, direct, indirect, pretreat, psi_check, dose_filter, include_k, include_psi, include_dv, lrc_filter, time_filter);
             if (allpts.size() == (size + 1)) i++;
         }
     }
 
-    public static void gridSearch(ArrayList<Patient> allpts, ArrayList<Double> hour, boolean direct, boolean indirect, boolean pretreat, boolean psi_check, boolean include_k, boolean include_psi, boolean include_dv) {
-        double psi; double alpha = 0; double delta = 0;
-        // double lambda = 0.07; // constant growth rate
-        double[] lambda_range = {
-                0.0,
-                0.01
-        }; // Develops a range of alpha values to be tested
-        double[] alpha_range = {
-                0.07,
-                0.11
-        }; // Develops a range of alpha values to be tested
-        alpha_range = new double[]{0.1};
-        double[] delta_range = {
-                0.01,
-                0.09
-        }; // Develops a range of delta values to be tested
-        delta_range = new double[]{0.1};
-        double[] psi_range = {
-                0.6,
-                1
-        }; // Develops a range of PSI values to be tested
-        psi_range = new double[]{0.9};
-        double[] frac_range = {
-                0.1,
-                30
-        }; // Develops a range of fraction sizes to be tested
-        // frac_range = new double[]{2};
-
-        double a_incr = 0.02; // Determines level of incrementation in values for direct cell kill
-        double d_incr = 0.005; // Determines level of incrementation in values for indirect cell kill
-        double l_incr = 0.001; // Determines level of incrementation for growth rate
-        double psi_incr = 0.02;
-        double frac_iter = 0.1;
-
+    public static void gridSearch(ArrayList<Patient> allpts, ArrayList<Double> hour, boolean direct, boolean indirect, boolean pretreat, boolean psi_check, boolean include_k, boolean include_psi, boolean include_dv, boolean lrc_filter, boolean dose_filter, boolean time_filter, boolean volume_start, double[] lambda_range, double[] alpha_range, double[] delta_range, double[] psi_range, double[] frac_range, double[] incr_range) {
+        double alpha = 0; double delta = 0;
         if (direct && indirect) {
             System.out.println("This should not be active but if so, this is just confirming that both direct" +
                     " and indirect cell kill are active.");
         } else if (direct) {
-            delta_range = new double[0];
+                delta_range = new double[0];
         } else if (indirect) {
             alpha_range = new double[0];
         } else {
@@ -178,20 +146,29 @@ public class Dose {
             alpha_range = new double[0];
             delta_range = new double[0];
         }
+        if (volume_start)
+            v0 = 0.1;
+        else
+            v0 = 100;
 
-        for (double a = alpha_range[0]; a <= alpha_range[alpha_range.length - 1] + 0.000001; a += a_incr) {
-            for (double d = delta_range[0]; d <= delta_range[delta_range.length - 1] + 0.000001; d += d_incr) {
-                if (direct) alpha = a;
+        double startAlpha = alpha_range.length > 0 ? alpha_range[0] : 0;
+        double endAlpha = alpha_range.length > 0 ? alpha_range[alpha_range.length - 1] : 0;
+        double startDelta = delta_range.length > 0 ? delta_range[0] : 0;
+        double endDelta = delta_range.length > 0 ? delta_range[delta_range.length - 1] : 0;
+
+        for (double a = startAlpha; a <= endAlpha; a += (incr_range[0] != 0 ? incr_range[0] : 1)) {
+            if (direct) alpha = a;
+            for (double d = startDelta; d <= endDelta; d += (incr_range[1] != 0 ? incr_range[1] : 1)) {
                 if (indirect) delta = d;
-                for (double lambda = lambda_range[0]; lambda <= lambda_range[lambda_range.length - 1] + 0.000001; lambda += l_incr) {
-                    for (psi = psi_range[0]; psi <= psi_range[psi_range.length - 1] + 0.000001; psi += psi_incr) {
-                        for (double f = frac_range[0]; f <= frac_range[frac_range.length - 1] + 0.000001; f += frac_iter) {
+                for (double l = lambda_range[0]; l <= lambda_range[lambda_range.length - 1]; l += (incr_range[2] != 0 ? incr_range[2] : 1)) {
+                    for (double psi = psi_range[0]; psi <= psi_range[psi_range.length - 1]; psi += (incr_range[3] != 0 ? incr_range[3] : 1)) {
+                        for (double f = frac_range[0]; f <= frac_range[frac_range.length - 1]; f += (incr_range[4] != 0 ? incr_range[4] : 1)) {
                             Patient p = new Patient();
                             ArrayList<ArrayList<Double>> data = new ArrayList<>();
-                            for (int n = 0; n < 5; n++)
-                                data.add(new ArrayList<>()); // time, volume, k_vals, psi_vals, dv_vals
-
-                            doseHelper(allpts, p, hour, data, psi, alpha, delta, lambda, f, direct, indirect, pretreat, psi_check, include_k, include_psi, include_dv);
+                            for (int n = 0; n < 5; n++) {
+                                data.add(new ArrayList<>());
+                            }
+                            doseHelper(allpts, p, hour, data, psi, alpha, delta, l, f, direct, indirect, pretreat, psi_check, include_k, include_psi, include_dv, lrc_filter, dose_filter, time_filter);
                         }
                     }
                 }
@@ -200,7 +177,7 @@ public class Dose {
     }
 
     // Helper function to cumulDose function and Grid Search
-    public static void doseHelper(ArrayList<Patient> allpts, Patient a, ArrayList<Double> hour, ArrayList<ArrayList<Double>> data, double psi, double alpha, double delta, double lambda, double fraction_size, boolean direct, boolean indirect, boolean pretreat, boolean psi_check, boolean include_k, boolean include_psi, boolean include_dv)
+    public static void doseHelper(ArrayList<Patient> allpts, Patient a, ArrayList<Double> hour, ArrayList<ArrayList<Double>> data, double psi, double alpha, double delta, double lambda, double fraction_size, boolean direct, boolean indirect, boolean pretreat, boolean psi_check, boolean include_k, boolean include_psi, boolean include_dv, boolean lrc_filter, boolean dose_filter, boolean time_filter)
     {
         double k = v0 / psi; // calculates k
         double gamma = 1 - Math.exp(-alpha * fraction_size - (alpha / ab_ratio) * Math.pow(fraction_size, 2)); // calculates gamma
@@ -218,8 +195,8 @@ public class Dose {
             end = getPretreat(data, lambda, include_k, include_psi, include_dv, k); // conducts pretreatment if needed
         }
 
-        double cumul_dose = doseCheck(k, end, lambda, gamma, delta, fraction_size, max_dose, indirect, direct, pretreat, hour, data, percent_decr, include_k, include_psi, include_dv, psi_check);
-        if (!(cumul_dose == -1) && !(cumul_dose == -2)) // filters LRC (8 weeks of treatment or while number of doses <= maximum dose / fraction size)
+        double cumul_dose = doseCheck(k, end, lambda, gamma, delta, fraction_size, max_dose, indirect, direct, pretreat, hour, data, percent_decr, include_k, include_psi, include_dv, psi_check, lrc_filter, dose_filter, time_filter);
+        if (!(cumul_dose == -1)) // filters LRC (8 weeks of treatment or while number of doses <= maximum dose / fraction size) and PSI exceeding one
         {
             initializePatient(fraction_size, v0, lambda, alpha, delta, data, a, k, cumul_dose, max_dose);
             if (allpts.size() % 100.0 == 0.0 && allpts.size() > 1)
@@ -260,16 +237,32 @@ public class Dose {
     public static double doseCheck(double k, double end, double lambda, double gamma, double delta, double fraction_size,
                                    double cumul_dose, boolean indirect, boolean direct, boolean pretreat,
                                    ArrayList<Double> hour, ArrayList<ArrayList<Double>> data, double percent_dec,
-                                   boolean include_k, boolean include_psi, boolean include_dv, boolean psi_check) {
+                                   boolean include_k, boolean include_psi, boolean include_dv, boolean psi_check,
+                                   boolean lrc_filter, boolean dose_filter, boolean time_filter) {
         double t = 0;
         int numdoses = 0;
         double start = end;
-        while (t < max_time && numdoses <= cumul_dose / fraction_size) // filters by LRC / time constraints (if either missed, return -1)
+        while (true) // filters by LRC / time constraints (if either missed, return -1)
         {
-            if (direct && indirect && (end / k > 1) && psi_check) // returns "-2" if psi > 1 with both direct/indirect kill activated
-                return -2;
+            if (numdoses * fraction_size > max_dose)
+            {
+                if (dose_filter)
+                    break;
+                else return max_dose;
+            }
+            if (direct && indirect && (end / k > 1)) // returns "-1" if psi > 1 with both direct/indirect kill activated
+                if (psi_check)
+                    break;
+            if (t >= max_time) {
+                if (time_filter)
+                    break;
+                else return numdoses * fraction_size;
+            }
             if (end / start <= percent_dec) // if LRC achieved, return minimum dose
-                return numdoses * fraction_size;
+            {
+                if (lrc_filter)
+                    return numdoses * fraction_size;
+            }
             t += delta_t; // t increments by 1 hour
             double weekend = (int) (t / delta_t) % (7 / delta_t);
             if (weekend <= 120) // if not weekend

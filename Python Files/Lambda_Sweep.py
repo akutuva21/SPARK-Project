@@ -8,22 +8,39 @@ import matplotlib.patches as mpatches
 from matplotlib.lines import Line2D
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 from mpl_toolkits.axes_grid1.inset_locator import mark_inset
+import csv, os
 
 style.use('default')
-directory = 'Figure Data/Figure 3/'
+directory = ''
 
 start_psi = 0.8
 axis_thickness = 3
 
-sweep1 = directory + 'lam_sweep_direct_psi_0.7.csv'
-t = pd.read_csv(str(sweep1))
-sweep2 = directory + 'lam_sweep_indirect_psi_0.7.csv'
-t2 = pd.read_csv(str(sweep2))
+s1 = directory + 'lam_sweep_direct_psi_0.7'
+s2 = directory + 'lam_sweep_indirect_psi_0.7'
 
-sweep3 = directory + 'lam_sweep_direct_psi_0.7_k.csv'
-k = pd.read_csv(sweep3)
-sweep4 = directory + 'lam_sweep_indirect_psi_0.7_k.csv'
-k2 = pd.read_csv(sweep4)
+s3 = directory + 'lam_sweep_direct_psi_0.7_k'
+s4 = directory + 'lam_sweep_indirect_psi_0.7_k'
+
+files = [s1, s2, s3, s4]
+for f in files:
+    # Read the CSV file
+    with open(f + '.csv', 'r') as file:
+        reader = csv.reader(file)
+        data = list(reader)
+
+    # Transpose the data
+    transposed_data = list(zip(*data))
+
+    # Write the transposed data to a new CSV file
+    with open(f + '_T.csv', 'w', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerows(transposed_data)
+
+t = pd.read_csv(str(s1 + '_T.csv'))
+t2 = pd.read_csv(str(s2 + '_T.csv'))
+k = pd.read_csv(str(s3 + '_T.csv'))
+k2 = pd.read_csv(str(s4 + '_T.csv'))
 
 min_val, max_val = 0, 0.5
 n = 20
@@ -161,4 +178,11 @@ mark_inset(ax, subax1, loc1=2, loc2=4, fc="none", ec='0.5', alpha=0.2)
 fig.set_size_inches(6.8*2, 5)
 
 fig.tight_layout()
+
+current_dir = os.getcwd()
+parent_dir = os.path.abspath(os.path.join(current_dir, os.pardir))
+folder_path = os.path.join(parent_dir, 'Figures')
+os.makedirs(folder_path, exist_ok=True)
+plt.savefig(os.path.join(folder_path, "Figure_3.png"), dpi=300, bbox_inches='tight')
+
 plt.show()

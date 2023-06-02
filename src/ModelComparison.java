@@ -4,210 +4,439 @@ import java.io.PrintWriter;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
-import java.lang.Math;
 // import java.util.Scanner;
 
 public class ModelComparison {
 
-    public static String round(String d, double place)
-    {
-        double d_new = Double.parseDouble(d);
-        double rounded = (int)(d_new * Math.pow(d_new, place)) / Math.pow(d_new, place);
-        System.out.println(rounded);
+    public static String round(double value, double place) {
+        double rounded = Math.round(value * Math.pow(10, place)) / Math.pow(10, place);
         return String.valueOf(rounded);
     }
 
     // Used for writing a String str to a given file in a csv format (must include ',')
-    public static void writeToOutputFile(String str, String filename) throws Exception {
-        fw = new FileWriter(filename, true);
-        bw = new BufferedWriter(fw);
-        pw = new PrintWriter(bw);
+    public static void writeToOutputFile(String str, String filename, int place) throws Exception {
+        try (PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(filename, true)))) {
+            String[] values = str.split("(?<!\\\\),");
+            DecimalFormat decimalFormat = new DecimalFormat("#." + "#".repeat(Math.max(0, place)));
 
-        pw.println(str);
-        bw.close();
-        pw.close();
-        fw.close();
+            for (int i = 0; i < values.length; i++) {
+                String value = values[i].trim(); // Remove leading/trailing whitespaces
+
+                if (value.matches("\\d+(\\.\\d+)?")) {
+                    value = decimalFormat.format(Double.parseDouble(value));
+                }
+                pw.print(value);
+
+                if (i < values.length - 1) {
+                    pw.print(",");
+                }
+            }
+            pw.println();
+        }
     }
 
-    public static void processAndWriteData(StringBuilder s, String filename, List<Patient> allpts, boolean direct, boolean indirect, double scale, int option) throws Exception {
+    public static void processAndWriteData(StringBuilder s, String filename, List<Patient> allpts, boolean direct, boolean indirect, int option) throws Exception {
         s.append("Time").append(",");
-        for (Patient p : allpts)
+        for (double d : allpts.get(0).getData().get(0))
         {
-            for (double d : p.getData().get(0))
-            {
-                s.append(d).append(',');
-            }
-            if (!s.isEmpty())
-                s.deleteCharAt(s.length() - 1);
+            s.append(d).append(',');
         }
-        writeToOutputFile(s.substring(0, s.length() - 1), filename);
+        if (!s.isEmpty())
+            s.deleteCharAt(s.length() - 1);
+        int place = 5;
+        writeToOutputFile(s.substring(0, s.length() - 1), filename, place);
 
         for (Patient p : allpts) {
             s.setLength(0);
             if (direct & indirect)
-                s.append("Lambda = ").append(p.getlambda()).append(" & Alpha = ").append(p.getalpha()).append(" & Delta = ").append(p.getdelta()).append(",");
+                s.append("Lambda = ").append(round(p.getlambda(), place)).append(" & Alpha = ").append(round(p.getalpha(), place)).append(" & Delta = ").append(round(p.getdelta(), place)).append(",");
             else if (direct)
-                s.append("Lambda = ").append(p.getlambda()).append(" & Alpha = ").append(p.getalpha()).append(",");
+                s.append("Lambda = ").append(round(p.getlambda(), place)).append(" & Alpha = ").append(round(p.getalpha(), place)).append(",");
             else if (indirect)
-                s.append("Lambda = ").append(p.getlambda()).append(" & Delta = ").append(p.getdelta()).append(",");
+                s.append("Lambda = ").append(round(p.getlambda(), place)).append(" & Delta = ").append(round(p.getdelta(), place)).append(",");
             else
-                s.append("Lambda = ").append(p.getlambda()).append(",");
+                s.append("Lambda = ").append(round(p.getlambda(), place)).append(",");
             for (double d : p.getData().get(option))
             {
                 s.append(d).append(',');
             }
             if (!s.isEmpty())
                 s.deleteCharAt(s.length() - 1);
-            writeToOutputFile(s.substring(0, s.length() - 1), filename);
+            writeToOutputFile(s.substring(0, s.length() - 1), filename, place);
         }
     }
 
-    static FileWriter fw = null;
-    static BufferedWriter bw = null;
-    static PrintWriter pw = null;
-
     public static void main(String[] args) throws Exception {
-        final int seed = 7; // random seed value set
-        Random r = new Random(seed); // declare a random object with seed
-
-        /* Signify default number of trials / evolutions / patients */
-        // boolean d = true; // boolean for default parameters
-        int trialnum = 100; // number of trials/sets of cohorts
-        int evol = 1000; // number of evolutions (if robustness is used)
-        int num_patients = 10000; // default number of in-silico patients to be used
+        int place = 5;
 
         /* Signify times of treatment */
         ArrayList<Double> hour = new ArrayList<>(); // hour of treatment (current set at 6 am)
         hour.add(6.0); // 6 AM treatment
-
-        int selection = 1; // boolean/int for whether to sort robustness by RMSE/J statistic
-        ArrayList<Cohort> datastore = new ArrayList<>(); // stores lambda/alpha/J statistic
 
         /* pretreatment = whether treatment prior to patient growth is simulated */
         boolean pretreat = false; // signifies whether an early growth period is used
         boolean psi_check = true; // used in in-silico testing to see whether V ever exceeds K (Direct + Indirect case)
 
         /* direct and/or indirect cell kill enabled */
-        boolean direct = !true; // boolean for direct cell kill
-        boolean indirect = !true; // boolean for indirect cell kill
-        boolean both = true; // adds both data to the same
-        if(both)
-        {
-            direct = true;
-            indirect = true;
-        }
+        boolean direct; // boolean for direct cell kill
+        boolean indirect; // boolean for indirect cell kill
 
-        boolean include_volume = true; // Whether Volume values are stored as Volume_Data.csv
-        boolean include_k = true; // Whether K values are stored (if modified over time)
-        boolean include_psi = true; // Whether PSI values are stored (if modified over time)
-        boolean include_dv = !true; // Whether changes are volume are stored over time (if modified over time)
+        boolean include_psi = false; // Whether PSI values are stored (if modified over time)
+        boolean include_dv = false; // Whether changes are volume are stored over time (if modified over time)
 
         /* modes of testing */
-        boolean robust_test = false; // Indicates whether robustness testing is being done
-        boolean spawn_random_pts = false; // Creates random patients with pre-defined parameters (no filter except PSI)
-        boolean random_selection = false; // Conducts random parameter selection in pre-defined experimental-derived ranges
-        boolean grid_search = true; // Conducts a grid search to simulate patients based on parameter ranges defined in function
+        boolean lrc_filter; // Whether to include the point if LRC is achieved
+        boolean dose_filter; // Whether to cap the number of doses at a maximum dosage
+        boolean time_filter; // Whether to cap the time at a maximum number of days/weeks of treatment
+        boolean logistic_start; // Whether to keep v0 at 100 or start at 0.1
+
+        double[] alpha_range; double[] delta_range; double[] lambda_range; double[] psi_range; double[] frac_range;
+
+        String volume_name, k_name, values_name;
+        double alpha_incr; double delta_incr; double lambda_incr; double psi_incr; double frac_incr;
+
+        // Figure 1
+
+        // Left Panel
+        lrc_filter = false;
+        dose_filter = false;
+        time_filter = false;
+        direct = false; indirect = false;
+        logistic_start = true;
+        alpha_range = new double[]{0};
+        delta_range = new double[]{0};
+        lambda_range = new double[]{0.5};
+        frac_range = new double[]{2};
+        psi_range = new double[]{0.1/100};
+        alpha_incr = 0;
+        delta_incr = 0;
+        lambda_incr = 0;
+        psi_incr = 0;
+        frac_incr = 0;
+        values_name = "Logistic All_Values";
+        volume_name = "Logistic_Volume";
+        k_name = "Logistic_k";
+
+        extracted(place, direct, indirect, lrc_filter, dose_filter, time_filter, logistic_start, hour, pretreat, psi_check, 
+        include_psi, include_dv, alpha_range, delta_range, lambda_range, psi_range, frac_range, alpha_incr, delta_incr, 
+        lambda_incr, psi_incr, frac_incr, values_name, volume_name, k_name);
+
+        // Right Panel DVR
+
+        lrc_filter = false;
+        dose_filter = false;
+        time_filter = false;
+        direct = true; indirect = false;
+        logistic_start = false;
+        alpha_range = new double[]{0.12};
+        delta_range = new double[]{0};
+        lambda_range = new double[]{0.1};
+        frac_range = new double[]{2};
+        psi_range = new double[]{0.8};
+        alpha_incr = 0;
+        delta_incr = 0;
+        lambda_incr = 0;
+        psi_incr = 0;
+        frac_incr = 0;
+        values_name = "Direct All_Values";
+        volume_name = "Direct_Volume";
+        k_name = "Direct_k";
+
+        extracted(place, direct, indirect, lrc_filter, dose_filter, time_filter, logistic_start, hour, pretreat, psi_check, 
+        include_psi, include_dv, alpha_range, delta_range, lambda_range, psi_range, frac_range, alpha_incr, delta_incr, 
+        lambda_incr, psi_incr, frac_incr, values_name, volume_name, k_name);
+
+        // Right Panel CCR
+
+        lrc_filter = false;
+        dose_filter = false;
+        time_filter = false;
+        direct = false; indirect = true;
+        logistic_start = false;
+        alpha_range = new double[]{0};
+        delta_range = new double[]{0.1};
+        lambda_range = new double[]{0.1};
+        frac_range = new double[]{2};
+        psi_range = new double[]{0.8};
+        alpha_incr = 0;
+        delta_incr = 0;
+        lambda_incr = 0;
+        psi_incr = 0;
+        frac_incr = 0;
+        values_name = "Indirect All_Values";
+        volume_name = "Indirect_Volume";
+        k_name = "Indirect_k";
+
+        extracted(place, direct, indirect, lrc_filter, dose_filter, time_filter, logistic_start, hour, pretreat, psi_check, 
+        include_psi, include_dv, alpha_range, delta_range, lambda_range, psi_range, frac_range, alpha_incr, delta_incr, 
+        lambda_incr, psi_incr, frac_incr, values_name, volume_name, k_name);
+
+        // Figure 2
+
+        // Left Panel
+
+        lrc_filter = false;
+        dose_filter = false;
+        time_filter = false;
+        direct = true; indirect = false;
+        logistic_start = false;
+        alpha_range = new double[]{0, 0.2};
+        delta_range = new double[]{0.1};
+        lambda_range = new double[]{0.1};
+        frac_range = new double[]{2};
+        psi_range = new double[]{0.9};
+        alpha_incr = 0.02;
+        delta_incr = 0;
+        lambda_incr = 0;
+        psi_incr = 0;
+        frac_incr = 0;
+        values_name = "";
+        volume_name = "l=0.1,psi=0.9,a";
+        k_name = "";
+
+        extracted(place, direct, indirect, lrc_filter, dose_filter, time_filter, logistic_start, hour, pretreat, psi_check, 
+        include_psi, include_dv, alpha_range, delta_range, lambda_range, psi_range, frac_range, alpha_incr, delta_incr, 
+        lambda_incr, psi_incr, frac_incr, values_name, volume_name, k_name);
+
+        // Right Panel
+
+        lrc_filter = false;
+        dose_filter = false;
+        time_filter = false;
+        direct = false; indirect = true;
+        logistic_start = false;
+        alpha_range = new double[]{0};
+        delta_range = new double[]{0, 0.2};
+        lambda_range = new double[]{0.1};
+        frac_range = new double[]{2};
+        psi_range = new double[]{0.9};
+        alpha_incr = 0;
+        delta_incr = 0.02;
+        lambda_incr = 0;
+        psi_incr = 0;
+        frac_incr = 0;
+        values_name = "";
+        volume_name = "l=0.1,psi=0.9,d";
+        k_name = "";
+
+        extracted(place, direct, indirect, lrc_filter, dose_filter, time_filter, logistic_start, hour, pretreat, psi_check, 
+        include_psi, include_dv, alpha_range, delta_range, lambda_range, psi_range, frac_range, alpha_incr, delta_incr, 
+        lambda_incr, psi_incr, frac_incr, values_name, volume_name, k_name);
+
+        // Figure 3
+
+        // Left Panel
+
+        lrc_filter = false;
+        dose_filter = false;
+        time_filter = false;
+        direct = true; indirect = false;
+        logistic_start = false;
+        alpha_range = new double[]{0.1};
+        delta_range = new double[]{0};
+        lambda_range = new double[]{0, 0.1};
+        frac_range = new double[]{2};
+        psi_range = new double[]{0.7};
+        alpha_incr = 0;
+        delta_incr = 0;
+        lambda_incr = 0.01;
+        psi_incr = 0;
+        frac_incr = 0;
+        values_name = "";
+        volume_name = "lam_sweep_direct_psi_0.7";
+        k_name = volume_name + "_k";
+
+        extracted(place, direct, indirect, lrc_filter, dose_filter, time_filter, logistic_start, hour, pretreat, psi_check, 
+        include_psi, include_dv, alpha_range, delta_range, lambda_range, psi_range, frac_range, alpha_incr, delta_incr, 
+        lambda_incr, psi_incr, frac_incr, values_name, volume_name, k_name);
+
+        // Right Panel
+
+        lrc_filter = false;
+        dose_filter = false;
+        time_filter = false;
+        direct = false; indirect = true;
+        logistic_start = false;
+        alpha_range = new double[]{0};
+        delta_range = new double[]{0.1};
+        lambda_range = new double[]{0, 0.1};
+        frac_range = new double[]{2};
+        psi_range = new double[]{0.7};
+        alpha_incr = 0;
+        delta_incr = 0;
+        lambda_incr = 0.01;
+        psi_incr = 0;
+        frac_incr = 0;
+        values_name = "";
+        volume_name = "lam_sweep_indirect_psi_0.7";
+        k_name = volume_name + "_k";
+
+        extracted(place, direct, indirect, lrc_filter, dose_filter, time_filter, logistic_start, hour, pretreat, psi_check, 
+        include_psi, include_dv, alpha_range, delta_range, lambda_range, psi_range, frac_range, alpha_incr, delta_incr, 
+        lambda_incr, psi_incr, frac_incr, values_name, volume_name, k_name);
+
+        // Figure 4
+
+        // Left Panel
+
+        lrc_filter = true;
+        dose_filter = true;
+        time_filter = true;
+        direct = true; indirect = false;
+        logistic_start = false;
+        alpha_range = new double[]{0.06, 0.14};
+        delta_range = new double[]{0};
+        lambda_range = new double[]{0.07};
+        frac_range = new double[]{2};
+        psi_range = new double[]{0.6, 1};
+        alpha_incr = 0.0005;
+        delta_incr = 0;
+        lambda_incr = 0;
+        psi_incr = 0.0005;
+        frac_incr = 0;
+        values_name = "Alpha_PSI_dose";
+        volume_name = "";
+        k_name = "";
+
+        extracted(place, direct, indirect, lrc_filter, dose_filter, time_filter, logistic_start, hour, pretreat, psi_check, 
+        include_psi, include_dv, alpha_range, delta_range, lambda_range, psi_range, frac_range, alpha_incr, delta_incr, 
+        lambda_incr, psi_incr, frac_incr, values_name, volume_name, k_name);
+
+        // Right Panel
+
+        lrc_filter = true;
+        dose_filter = true;
+        time_filter = false;
+        direct = true; indirect = false;
+        logistic_start = false;
+        delta_range = new double[]{0};
+        frac_range = new double[]{2};
+        alpha_incr = 0;
+        delta_incr = 0;
+        lambda_incr = 0;
+        psi_incr = 0;
+        frac_incr = 0;
+        values_name = "";
+        k_name = "";
+        lambda_range = new double[]{0.07};
+
+        // top left, top right, bottom right, bottom left
+        double[][] alpha_ranges = { {0.08}, {0.12}, {0.12}, {0.08} };
+        double[][] psi_ranges_direct = { {0.9}, {0.9}, {0.7}, {0.7} };
+        String[] volume_names_direct = {"Volume_Direct_topleft", "Volume_Direct_topright", "Volume_Direct_bottomright", "Volume_Direct_bottomleft"}; 
+
+        for (int i = 0; i < 4; i++)
+        {
+            extracted(place, direct, indirect, lrc_filter, dose_filter, time_filter, logistic_start, hour, pretreat, psi_check, 
+            include_psi, include_dv, alpha_ranges[i], delta_range, lambda_range, psi_ranges_direct[i], frac_range, alpha_incr, delta_incr, 
+            lambda_incr, psi_incr, frac_incr, values_name, volume_names_direct[i], k_name);
+        }
+
+        // Figure 5
+        
+        // Left Panel
+
+        lrc_filter = true;
+        dose_filter = true;
+        time_filter = true;
+        direct = false; indirect = true;
+        logistic_start = false;
+        alpha_range = new double[]{0};
+        delta_range = new double[]{0.01, 0.09};
+        lambda_range = new double[]{0.07};
+        frac_range = new double[]{2};
+        psi_range = new double[]{0.6, 1};
+        alpha_incr = 0;
+        delta_incr = 0.001;
+        lambda_incr = 0;
+        psi_incr = 0.001;
+        frac_incr = 0;
+        values_name = "Delta_PSI_dose";
+        volume_name = "";
+        k_name = "";
+
+        extracted(place, direct, indirect, lrc_filter, dose_filter, time_filter, logistic_start, hour, pretreat, psi_check, 
+        include_psi, include_dv, alpha_range, delta_range, lambda_range, psi_range, frac_range, alpha_incr, delta_incr, 
+        lambda_incr, psi_incr, frac_incr, values_name, volume_name, k_name);
+
+        // Right Panel
+
+        lrc_filter = true;
+        dose_filter = true;
+        time_filter = true;
+        direct = false; indirect = true;
+        logistic_start = false;
+        alpha_range = new double[]{0};
+        frac_range = new double[]{2};
+        alpha_incr = 0;
+        delta_incr = 0;
+        lambda_incr = 0;
+        psi_incr = 0;
+        frac_incr = 0;
+        values_name = "";
+        k_name = "";
+        lambda_range = new double[]{0.07};
+
+        // top left, top right, bottom right, bottom left
+        double[][] delta_ranges = { {0.03}, {0.07}, {0.07}, {0.03} };
+        double[][] psi_ranges_indirect = { {0.9}, {0.9}, {0.7}, {0.7} };
+        String[] volume_names_indirect = {"Volume_Indirect_topleft", "Volume_Indirect_topright", "Volume_Indirect_bottomright", "Volume_Indirect_bottomleft"};
+        String[] k_names = {"k_Indirect_topleft", "k_Indirect_topright", "k_Indirect_bottomright", "k_Indirect_bottomleft"};
+
+        for (int i = 0; i < 4; i++)
+        {
+            extracted(place, direct, indirect, lrc_filter, dose_filter, time_filter, logistic_start, hour, pretreat, psi_check, 
+            include_psi, include_dv, alpha_range, delta_ranges[i], lambda_range, psi_ranges_indirect[i], frac_range, alpha_incr, 
+            delta_incr, lambda_incr, psi_incr, frac_incr, values_name, volume_names_indirect[i], k_names[i]);
+        }
+
+    }
+
+    private static void extracted(int place, boolean direct, boolean indirect, boolean lrc_filter, boolean dose_filter, 
+            boolean time_filter, boolean logistic_start, ArrayList<Double> hour, boolean pretreat, boolean psi_check, 
+            boolean include_psi, boolean include_dv, double[] alpha_range, double[] delta_range, double[] lambda_range, 
+            double[] psi_range, double[] frac_range, double alpha_incr, double delta_incr, double lambda_incr, 
+            double psi_incr, double frac_incr, String values_name, String volume_name, String k_name) throws Exception {
 
         ArrayList<Patient> allpts = new ArrayList<>(); // creates a blank arraylist (vector) of patient objects
 
-        /*// Below lines are useful for potential terminal boolean implementation
-        Scanner in = new Scanner(System.in);
-        System.out.println("Default? (True / False)");
-        String def = in.nextLine();
-        while (!def.equalsIgnoreCase("true") && !def.equalsIgnoreCase("false")) {
-            System.out.println("Try again.");
-            def = in.next();
+        double[] incr_range = new double[]{0, 0, 0, 0, 0};
+        if (direct) {
+            incr_range[0] = alpha_range.length > 1 ? alpha_incr : 0;
         }
-        d = Boolean.parseBoolean(def);
-
-        System.out.println("Robustness Testing? (True / False)");
-        String rob = in.next();
-        while (!rob.equalsIgnoreCase("true") && !rob.equalsIgnoreCase("false")) {
-            System.out.println("Try again.");
-            rob = in.next();
+        if (indirect) {
+            incr_range[1] = delta_range.length > 1 ? delta_incr : 0;
         }
-        robust_test = Boolean.parseBoolean(rob);
+        incr_range[2] = lambda_range.length > 1 ? lambda_incr : 0;
 
-        if (robust_test) {
-            if (!d) {
-                System.out.println("Enter the Number of Trials (1000 Preferable): ");
-                trialnum = in.nextInt();
-                System.out.println("Enter # of Evolutionary Trials (1000+ Accurate): ");
-                evol = in.nextInt();
-            }
-            System.out.println("Enter 0 for J Statistic, 1 for Error: ");
-            selection = in.nextInt();
-            System.out.println("Robustness Testing: There are " + trialnum + " total trials with " + evol +
-                    " evolutions on each trial.");
-        }
+        incr_range[3] = psi_range.length > 1 ? psi_incr : 0;
 
-        if (!robust_test) // if not doing robustness testing
+        incr_range[4] = frac_range.length > 1 ? frac_incr : 0;
+
+        boolean include_values = values_name != null && !values_name.isEmpty(); // if values_name is not empty, include_values is true
+        boolean include_volume = volume_name != null && !volume_name.isEmpty(); // if volume_name is not empty, include_volume is true
+        boolean include_k = k_name != null && !k_name.isEmpty(); // if k_name is not empty, include_k is true
+        
+        Dose.gridSearch(allpts, hour, direct, indirect, pretreat, psi_check, include_k, include_psi, include_dv, lrc_filter, dose_filter, time_filter, logistic_start, lambda_range, alpha_range, delta_range, psi_range, frac_range, incr_range);
+
+        if (include_values) 
         {
-            if (!d) {
-                System.out.println("Direct Cell Kill?");
-                direct = in.nextBoolean();
-                System.out.println("Indirect Cell Kill?");
-                indirect = in.nextBoolean();
-            }
-            System.out.println("Enter the Number of Patients: ");
-            num_patients = in.nextInt(); // Enter the number of patients tested
-        }*/
+            String extension = ".csv";
+            writeToOutputFile("Lambda,Alpha,Delta,PSI,Dose,Size", values_name + extension, place);
 
-        System.out.println("Direct is " + direct + ", Indirect is " + indirect);
-        if (spawn_random_pts)
-            System.out.println("Number of Patients: " + num_patients);
-        System.out.println("Starting...");
+            for (Patient b : allpts)
+                writeToOutputFile(b.getlambda() + "," + b.getalpha() + "," +
+                        b.getdelta() + "," + b.getPSI() + ","
+                        + b.getMinDose() + "," + b.getFractionSize(), values_name + extension, place);
+        }
 
-        if (robust_test) {
-            String filename = "patientdata.csv"; // using sample patient data for comparison
-            // Conducts robustness testing based on generated patients from experimental data
-            Robust.robustPatient(filename, allpts, datastore, hour, selection, trialnum, evol, direct, indirect, r);
-            writeToOutputFile("Lambda,Sensitivity,Specificity,J Value,Error", "data.csv");
-            for (Cohort a : datastore)
-                writeToOutputFile(a.getlambda() + "," + a.getSensitivity() + "," + a.getSpecificity() + "," +
-                        a.getMaxtruetotal() + "," + a.geterror(), "data.csv");
-        }
-        else if (spawn_random_pts)
-        {
-            // double lambda = 0.1; // defines an arbitrary growth rate for all patients
-            allpts = In_Silico.patientSpawner(num_patients, hour, direct, indirect, pretreat, psi_check, include_k, include_psi, include_dv);
-        }
-        else if (random_selection)
-        {
-            Dose.cumulDose(allpts, num_patients, hour, direct, indirect, pretreat, psi_check, r, include_k, include_psi, include_dv);
-        }
-        else if (grid_search)
-        {
-            Dose.gridSearch(allpts, hour, direct, indirect, pretreat, psi_check, include_k, include_psi, include_dv);
-        }
-        // Save all patient values to a .csv file called "All_Values" in working directory
-        String filename = "All_Values";
-        String extension = ".csv";
-        writeToOutputFile("Lambda,Alpha,Delta,PSI,Dose,Size", filename + extension);
-
-        DecimalFormat df_obj = new DecimalFormat("#.#####");
-        for (Patient b : allpts)
-            writeToOutputFile(df_obj.format(b.getlambda()) + "," + df_obj.format(b.getalpha()) + "," +
-                    df_obj.format(b.getdelta()) + "," + df_obj.format(b.getPSI()) + ","
-                    + df_obj.format(b.getMinDose()) + "," + df_obj.format(b.getFractionSize()), filename + extension);
-
-        int scale = (int) Math.pow(10, 2);
         if (include_volume) {
             StringBuilder s = new StringBuilder();
-            processAndWriteData(s, "Volume_Data.csv", allpts, direct, indirect, scale, 1);
+            processAndWriteData(s, volume_name + ".csv", allpts, direct, indirect, 1);
         }
         if (include_k) {
             StringBuilder s = new StringBuilder();
-            processAndWriteData(s, "k_vals.csv", allpts, direct, indirect, scale, 2);
-        }
-        if (include_psi) {
-            StringBuilder s = new StringBuilder();
-            processAndWriteData(s, "psi_vals.csv", allpts, direct, indirect, scale, 3);
-        }
-        if (include_dv) {
-            StringBuilder s = new StringBuilder();
-            processAndWriteData(s, "dv_vals.csv", allpts, direct, indirect, scale, 4);
+            processAndWriteData(s, k_name + ".csv", allpts, direct, indirect, 2);
         }
     }
 }

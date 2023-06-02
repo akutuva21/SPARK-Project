@@ -5,6 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import style
 import matplotlib.gridspec as gridspec
+import csv, os
 
 style.use('default')
 
@@ -22,21 +23,34 @@ threshold = 0.322
 x = 1
 axis_thickness = 3
 
-directory = 'Figure Data/Figure 1/'
+a1 = 'Logistic_Volume'
+b1 = 'Logistic_k'
+c1 = 'Logistic All_Values'
+a2 = 'Direct_Volume'
+b2 = 'Direct_k'
+c2 = 'Direct All_Values'
+a3 = 'Indirect_Volume'
+b3 = 'Indirect_k'
+c3 = 'Indirect All_Values'
 
-a1 = directory + 'Logistic_Volume.csv'
-b1 = directory + 'Logistic_k.csv'
-c1 = directory + 'Logistic All_Values.csv'
-a2 = directory + 'Direct_Volume.csv'
-b2 = directory + 'Direct_k.csv'
-c2 = directory + 'Direct All_Values.csv'
-a3 = directory + 'Indirect_Volume.csv'
-b3 = directory + 'Indirect_k.csv'
-c3 = directory + 'Indirect All_Values.csv'
+files = [a1, b1, a2, b2, a3, b3]
+for f in files:
+    # Read the CSV file
+    with open(f + '.csv', 'r') as file:
+        reader = csv.reader(file)
+        data = list(reader)
 
-volume = [pd.read_csv(a1), pd.read_csv(a2), pd.read_csv(a3)]
-k_vals = [pd.read_csv(b1), pd.read_csv(b2), pd.read_csv(b3)]
-all_values = [pd.read_csv(c1), pd.read_csv(c2), pd.read_csv(c3)]
+    # Transpose the data
+    transposed_data = list(zip(*data))
+
+    # Write the transposed data to a new CSV file
+    with open(f + '_T.csv', 'w', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerows(transposed_data)
+
+volume = [pd.read_csv(a1 + "_T.csv"), pd.read_csv(a2 + "_T.csv"), pd.read_csv(a3 + "_T.csv")]
+k_vals = [pd.read_csv(b1 + "_T.csv"), pd.read_csv(b2 + "_T.csv"), pd.read_csv(b3 + "_T.csv")]
+all_values = [pd.read_csv(c1 + ".csv"), pd.read_csv(c2 + ".csv"), pd.read_csv(c3 + ".csv")]
 letter = ['A', 'B', 'C']
 
 for i in range(3):
@@ -138,5 +152,11 @@ subtitle_ax = fig.add_subplot(outer_grid[:, 1:])
 subtitle_ax.set_title('RT Response Models', fontsize=20, pad=28, fontweight='bold')
 subtitle_ax.text(-0.15, 1.2, 'B', fontsize=30, transform=subtitle_ax.transAxes, fontweight='bold')
 subtitle_ax.axis('off')
+
+current_dir = os.getcwd()
+parent_dir = os.path.abspath(os.path.join(current_dir, os.pardir))
+folder_path = os.path.join(parent_dir, 'Figures')
+os.makedirs(folder_path, exist_ok=True)
+plt.savefig(os.path.join(folder_path, "Figure_1.png"), dpi=300, bbox_inches='tight')
 
 plt.show()

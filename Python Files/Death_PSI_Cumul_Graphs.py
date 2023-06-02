@@ -5,13 +5,14 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib import style, cm, colors
 import matplotlib.gridspec as gridspec
+import csv, sys, os
 
 style.use('default')
 fig = plt.figure(figsize=(6.8*2, 5))
 outer_grid = gridspec.GridSpec(2, 4, width_ratios=(2, 0.25, 1, 1), hspace=0.2)
 
-direct = True
-indirect = not direct
+direct = sys.argv[1] == 'direct'
+indirect = sys.argv[1] == 'indirect'
 plot_width = 3
 font = 20
 label_font = 30
@@ -21,7 +22,7 @@ ax = plt.subplot(outer_grid[:, 0])
 ax.text(-0.275, 1.15, 'A', transform=ax.transAxes,
         color='black', fontweight='bold', fontsize=label_font, va='top')
 
-directory = 'Figure Data/Figures 4 and 5/'
+directory = ''
 
 s = directory + 'Alpha_PSI_dose.csv'
 t = pd.read_csv(s)
@@ -29,32 +30,64 @@ s2 = directory + 'Delta_PSI_dose.csv'
 t2 = pd.read_csv(s2)
 
 if direct:
-    s = directory + 'Volume_Direct_bottomleft.csv'
-    bottomleft = pd.read_csv(s)
-    s = directory + 'Volume_Direct_bottomright.csv'
-    bottomright = pd.read_csv(s)
-    s = directory + 'Volume_Direct_topleft.csv'
-    topleft = pd.read_csv(s)
-    s = directory + 'Volume_Direct_topright.csv'
-    topright = pd.read_csv(s)
+    s1 = directory + 'Volume_Direct_bottomleft'
+    s2 = directory + 'Volume_Direct_bottomright'
+    s3 = directory + 'Volume_Direct_topleft'
+    s4 = directory + 'Volume_Direct_topright'
+
+    files = [s1, s2, s3, s4]
+    for f in files:
+        # Read the CSV file
+        with open(f + '.csv', 'r') as file:
+            reader = csv.reader(file)
+            data = list(reader)
+
+        # Transpose the data
+        transposed_data = list(zip(*data))
+
+        # Write the transposed data to a new CSV file
+        with open(f + '_T.csv', 'w', newline='') as file:
+            writer = csv.writer(file)
+            writer.writerows(transposed_data)
+
+    bottomleft = pd.read_csv(str(s1 + '_T.csv'))
+    bottomright = pd.read_csv(str(s2 + '_T.csv'))
+    topleft = pd.read_csv(str(s3 + '_T.csv'))
+    topright = pd.read_csv(str(s4 + '_T.csv'))
 
 if indirect:
-    s = directory + 'Volume_Indirect_bottomleft.csv'
-    bottomleft = pd.read_csv(s)
-    s = directory + 'Volume_Indirect_bottomright.csv'
-    bottomright = pd.read_csv(s)
-    s = directory + 'Volume_Indirect_topleft.csv'
-    topleft = pd.read_csv(s)
-    s = directory + 'Volume_Indirect_topright.csv'
-    topright = pd.read_csv(s)
-    s = directory + 'k_Indirect_bottomleft.csv'
-    k_bottomleft = pd.read_csv(s)
-    s = directory + 'k_Indirect_bottomright.csv'
-    k_bottomright = pd.read_csv(s)
-    s = directory + 'k_Indirect_topleft.csv'
-    k_topleft = pd.read_csv(s)
-    s = directory + 'k_Indirect_topright.csv'
-    k_topright = pd.read_csv(s)
+    s1 = directory + 'Volume_Indirect_bottomleft'
+    s2 = directory + 'Volume_Indirect_bottomright'
+    s3 = directory + 'Volume_Indirect_topleft'
+    s4 = directory + 'Volume_Indirect_topright'
+    s5 = directory + 'k_Indirect_bottomleft'
+    s6 = directory + 'k_Indirect_bottomright'
+    s7 = directory + 'k_Indirect_topleft'
+    s8 = directory + 'k_Indirect_topright'
+
+    files = [s1, s2, s3, s4, s5, s6, s7, s8]
+    for f in files:
+        # Read the CSV file
+        with open(f + '.csv', 'r') as file:
+            reader = csv.reader(file)
+            data = list(reader)
+
+        # Transpose the data
+        transposed_data = list(zip(*data))
+
+        # Write the transposed data to a new CSV file
+        with open(f + '_T.csv', 'w', newline='') as file:
+            writer = csv.writer(file)
+            writer.writerows(transposed_data)
+
+    bottomleft = pd.read_csv(str(s1 + '_T.csv'))
+    bottomright = pd.read_csv(str(s2 + '_T.csv'))
+    topleft = pd.read_csv(str(s3 + '_T.csv'))
+    topright = pd.read_csv(str(s4 + '_T.csv'))
+    k_bottomleft = pd.read_csv(str(s5 + '_T.csv'))
+    k_bottomright = pd.read_csv(str(s6 + '_T.csv'))
+    k_topleft = pd.read_csv(str(s7 + '_T.csv'))
+    k_topright = pd.read_csv(str(s8 + '_T.csv'))
 
 cumul_direct = t.iloc[:, 4]
 cumul_indirect = t2.iloc[:, 4]
@@ -290,4 +323,14 @@ for ax in axs:
 
 plt.subplots_adjust(top=0.89, bottom=0.195, left=0.09,
                     right=0.985, hspace=0.2, wspace=0.2)
+
+current_dir = os.getcwd()
+parent_dir = os.path.abspath(os.path.join(current_dir, os.pardir))
+folder_path = os.path.join(parent_dir, 'Figures')
+os.makedirs(folder_path, exist_ok=True)
+if direct:
+    plt.savefig(os.path.join(folder_path, "Figure_4.png"), dpi=300, bbox_inches='tight')
+if indirect:
+    plt.savefig(os.path.join(folder_path, "Figure_5.png"), dpi=300, bbox_inches='tight')
+
 plt.show()
