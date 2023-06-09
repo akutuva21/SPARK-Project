@@ -24,10 +24,12 @@ ax.text(-0.275, 1.15, 'A', transform=ax.transAxes,
 
 directory = ''
 
-s = directory + 'Alpha_PSI_dose.csv'
-t = pd.read_csv(s)
-s2 = directory + 'Delta_PSI_dose.csv'
-t2 = pd.read_csv(s2)
+if direct:
+    s = directory + 'Alpha_PSI_dose.csv'
+    t = pd.read_csv(s)
+if indirect:
+    s = directory + 'Delta_PSI_dose.csv'
+    t = pd.read_csv(s)
 
 if direct:
     s1 = directory + 'Volume_Direct_bottomleft'
@@ -89,20 +91,19 @@ if indirect:
     k_topleft = pd.read_csv(str(s7 + '_T.csv'))
     k_topright = pd.read_csv(str(s8 + '_T.csv'))
 
-cumul_direct = t.iloc[:, 4]
-cumul_indirect = t2.iloc[:, 4]
-
 if direct:
     alpha = t.iloc[:, 1]
     psi_direct = t.iloc[:, 3]
     frac_size_direct = t.iloc[:, 5]
+    cumul_direct = t.iloc[:, 4]
     num = cumul_direct / frac_size_direct
 
 if indirect:
-    psi_indirect = t2.iloc[:, 3]
-    frac_size_indirect = t2.iloc[:, 5]
+    psi_indirect = t.iloc[:, 3]
+    frac_size_indirect = t.iloc[:, 5]
+    cumul_indirect = t.iloc[:, 4]
     num = cumul_indirect / frac_size_indirect
-    delta = t2.iloc[:, 2]
+    delta = t.iloc[:, 2]
 
 if direct:
     ax.set_xlabel(r'$\alpha$' + ' (' +
@@ -135,8 +136,10 @@ if indirect:
     cumul = cumul_indirect
 
 cmap = cm.get_cmap('viridis_r')
-norm = colors.Normalize(min(cumul_direct.min(), cumul_indirect.min()), max(
-    cumul_direct.max(), cumul_indirect.max()))
+if direct:
+    norm = colors.Normalize(cumul_direct.min(), cumul_direct.max())
+if indirect:
+    norm = colors.Normalize(cumul_indirect.min(), cumul_indirect.max())
 
 if indirect:
     manual_locations = [

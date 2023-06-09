@@ -42,14 +42,12 @@ t2 = pd.read_csv(str(s2 + '_T.csv'))
 k = pd.read_csv(str(s3 + '_T.csv'))
 k2 = pd.read_csv(str(s4 + '_T.csv'))
 
-min_val, max_val = 0, 0.5
+min_val, max_val = 0, 0.75
 n = 20
 orig_cmap = cm.YlGn_r
 col = orig_cmap(np.linspace(min_val, max_val, n))
 cmap = colors.LinearSegmentedColormap.from_list(
     "mycmap", col, N=len(t.columns) - 1)
-
-# cmap = cm.get_cmap('copper_r', len(t.columns) - 1)
 
 fig, axs = plt.subplots(1, 2)
 
@@ -58,7 +56,6 @@ for i in range(1, len(t.columns)):
 
 axs[0].plot((t.iloc[:, 0]) / 7, k.iloc[:, 1],
             label='K', c='darkorange', linewidth=2)
-# axs[0].set_title("LQ PSI Model", fontsize=20, pad=10)
 
 stepsize = 0.01
 
@@ -72,15 +69,14 @@ cb.ax.set_yticklabels([i for i in labels])
 cb.ax.tick_params(axis='both', which='major', labelsize=17)
 
 ################
-# cmap = cm.get_cmap('winter', len(t2.columns) - 1)
 
 for i in range(1, len(t2.columns)):
     axs[1].plot((t2.iloc[:, 0]) / 7, t2.iloc[:, i], c=cmap(i))
 
 axs[1].plot((t2.iloc[:, 0]) / 7, k2.iloc[:, 1],
             label='K (Carrying Capacity)', c='darkorange', linewidth=2)
-# axs[1].set_title(r'$\Delta$' + "K PSI Model", fontsize=20, pad=10)
 
+col = orig_cmap(np.linspace(min_val, max_val, n))
 cmap = colors.LinearSegmentedColormap.from_list(
     "mycmap", col, N=len(t2.columns) - 1)
 
@@ -92,13 +88,8 @@ labels = np.arange(0, stepsize * (len(t2.columns) - 1), stepsize * 2).round(3)
 loc = labels + stepsize / 2
 cb2.set_ticks(loc)
 cb2.ax.set_yticklabels([i for i in labels])
-# cb2.ax.set_xlabel(r'$\lambda$', fontsize = 20, labelpad = 15)
 cb2.ax.tick_params(axis='both', which='major', labelsize=17)
-# cb.ax.invert_yaxis()
 
-# ins = axs[1].inset_axes([0.75,0.75,0.2,0.2])
-
-# plt.colorbar(im, cax=cax)
 red_patch = mpatches.Patch(color='darkorange', label='K')
 colors = ['darkorange']
 lines = [Line2D([0], [0], color=c, linewidth=2) for c in colors]
@@ -125,15 +116,8 @@ for x in range(2):
     ymin, ymax = ax.get_ylim()
     ax.set_aspect(xmax / ymax)
 
-    # ax.axvspan(xmin, xmax, facecolor='lightgray', alpha=0.5)
-    # for time in np.arange(xmin, xmax, 1/7 * 1/24):
-    #     weekend = (int) (time * 7 * 24) % (24 * 7)
-    #     if weekend <= 120:
-    #         ax.axvspan(time, time + 1/24, facecolor="w", alpha=0.5)
     ax.set_xticks(np.arange(0, xmax + 1, 1))
     ax.set_yticks(np.linspace(0, 150, 4))
-
-    # ax.legend(lines, labels, loc='lower left', fontsize=15)
 
     if x == 0:
         loc = [4.3, 135]

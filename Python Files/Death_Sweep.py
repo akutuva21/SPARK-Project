@@ -39,8 +39,9 @@ fig = plt.figure(figsize=(12, 6))
 axs = [plt.subplot(outer_grid[:, 0]), plt.subplot(outer_grid[:, 2])]
 axis_thickness = 3
 
-min_val, max_val = 0, 0.65
+min_val, max_val = 0, 0.75
 n = 20
+
 orig_cmap = cm.Blues_r
 col = orig_cmap(np.linspace(min_val, max_val, n))
 
@@ -53,14 +54,9 @@ for x in range(2):
 
     cmap = colors.LinearSegmentedColormap.from_list(
         "mycmap", col, N=len(t.columns) - 1)
-    min_val, max_val = 0, 0.65
     n = 10
     stepsize = 0.02
-    m = len(t.columns) - 1
 
-    orig_cmap = cm.Blues_r
-    col = orig_cmap(np.linspace(min_val, max_val, n))
-    cmap = colors.LinearSegmentedColormap.from_list("mycmap", col, N=m)
     norm = colors.Normalize(vmin=0, vmax=stepsize * (len(t.columns) - 1))
     sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
 
@@ -80,7 +76,6 @@ for x in range(2):
         cb.ax.set_title(r'$\delta$', pad=10, fontsize=20)
 
     cb.ax.tick_params(axis='both', which='major', labelsize=20)
-    # cb.ax.invert_yaxis()
 
     ax.set_xlabel('Time on RT (week)', fontsize=20, labelpad=10)
     ax.set_ylabel('% Initial Tumor Volume', fontsize=20, labelpad=10)
@@ -90,11 +85,6 @@ for x in range(2):
     ax.set_ylim((0, 120))
 
     xmin, xmax = ax.get_xlim()
-    # ax.axvspan(xmin, xmax, facecolor='lightgray', alpha=0.5)
-    # for time in np.arange(xmin, xmax, 1/7 * 1/24):
-    #     weekend = (int) (time * 7 * 24) % (24 * 7)
-    #     if weekend <= 120:
-    #         ax.axvspan(time, time + 1/24, facecolor="w", alpha=0.5)
 
     ax.set_xticks(np.arange(0, xmax + 1, 1))
     ax.set_yticks(np.linspace(0, 100, 3))
