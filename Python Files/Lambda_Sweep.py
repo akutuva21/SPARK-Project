@@ -1,26 +1,23 @@
-## Figure 3: Lambda Parameter Sweep
+## Figure 4: Lambda Parameter Sweep
 
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import style, cm, colors
-import matplotlib.patches as mpatches
-from matplotlib.lines import Line2D
-from mpl_toolkits.axes_grid1.inset_locator import inset_axes
-from mpl_toolkits.axes_grid1.inset_locator import mark_inset
+from mpl_toolkits.axes_grid1.inset_locator import inset_axes, mark_inset
+import matplotlib.gridspec as gridspec
 import csv, os
 
 style.use('default')
-directory = ''
 
 start_psi = 0.8
 axis_thickness = 3
 
-s1 = directory + 'lam_sweep_direct_psi_0.7'
-s2 = directory + 'lam_sweep_indirect_psi_0.7'
+s1 = 'lam_sweep_direct_psi_0.7'
+s2 = 'lam_sweep_indirect_psi_0.7'
 
-s3 = directory + 'lam_sweep_direct_psi_0.7_k'
-s4 = directory + 'lam_sweep_indirect_psi_0.7_k'
+s3 = 'lam_sweep_direct_psi_0.7_k'
+s4 = 'lam_sweep_indirect_psi_0.7_k'
 
 files = [s1, s2, s3, s4]
 for f in files:
@@ -42,82 +39,66 @@ t2 = pd.read_csv(str(s2 + '_T.csv'))
 k = pd.read_csv(str(s3 + '_T.csv'))
 k2 = pd.read_csv(str(s4 + '_T.csv'))
 
+read_data = [t, t2]
+k_data = [k, k2]
+letter = ['A', 'B']
+labels = ['K']
+outer_grid = gridspec.GridSpec(2, 2, width_ratios=(2, 2))
+
+fig = plt.figure(figsize=(6.8*2, 5))
+axs = [plt.subplot(outer_grid[:, 0]), plt.subplot(outer_grid[:, 1])]
+
 min_val, max_val = 0, 0.75
 n = 20
 orig_cmap = cm.YlGn_r
 col = orig_cmap(np.linspace(min_val, max_val, n))
-cmap = colors.LinearSegmentedColormap.from_list(
-    "mycmap", col, N=len(t.columns) - 1)
-
-fig, axs = plt.subplots(1, 2)
-
-for i in range(1, len(t.columns)):
-    axs[0].plot((t.iloc[:, 0]) / 7, t.iloc[:, i], c=cmap(i))
-
-axs[0].plot((t.iloc[:, 0]) / 7, k.iloc[:, 1],
-            label='K', c='darkorange', linewidth=2)
-
-stepsize = 0.01
-
-norm = colors.Normalize(vmin=0, vmax=stepsize * (len(t.columns) - 1))
-sm = plt.cm.ScalarMappable(norm=norm, cmap=cmap)
-cb = plt.colorbar(sm, ax=axs[0], format='%.3f', fraction=0.046, pad=0.04)
-labels = np.arange(0, stepsize * (len(t.columns) - 1), stepsize * 2)
-loc = labels + stepsize / 2
-cb.set_ticks(loc)
-cb.ax.set_yticklabels([i for i in labels])
-cb.ax.tick_params(axis='both', which='major', labelsize=17)
-
-################
-
-for i in range(1, len(t2.columns)):
-    axs[1].plot((t2.iloc[:, 0]) / 7, t2.iloc[:, i], c=cmap(i))
-
-axs[1].plot((t2.iloc[:, 0]) / 7, k2.iloc[:, 1],
-            label='K (Carrying Capacity)', c='darkorange', linewidth=2)
-
-col = orig_cmap(np.linspace(min_val, max_val, n))
-cmap = colors.LinearSegmentedColormap.from_list(
-    "mycmap", col, N=len(t2.columns) - 1)
-
-norm = colors.Normalize(vmin=0, vmax=stepsize * (len(t2.columns) - 1))
-sm = plt.cm.ScalarMappable(norm=norm, cmap=cmap)
-
-cb2 = plt.colorbar(sm, ax=axs[1], format='%.5f', fraction=0.046, pad=0.04)
-labels = np.arange(0, stepsize * (len(t2.columns) - 1), stepsize * 2).round(3)
-loc = labels + stepsize / 2
-cb2.set_ticks(loc)
-cb2.ax.set_yticklabels([i for i in labels])
-cb2.ax.tick_params(axis='both', which='major', labelsize=17)
-
-red_patch = mpatches.Patch(color='darkorange', label='K')
-colors = ['darkorange']
-lines = [Line2D([0], [0], color=c, linewidth=2) for c in colors]
-labels = ['K']
-letter = ['A', 'B']
 
 for x in range(2):
+    t = read_data[x]
+    k = k_data[x]
     ax = axs[x]
 
-    ax.text(-0.45, 1.15, letter[x], transform=ax.transAxes,
-            color='black', fontweight='bold', fontsize=30, va='top')
+    ax.text(-0.35, 1.2, letter[x], transform=ax.transAxes,
+        color='black', fontweight='bold', fontsize=30, va='top')
+    
+    cmap = colors.LinearSegmentedColormap.from_list(
+    "mycmap", col, N=len(t.columns) - 1)
+    stepsize = 0.01
+
+    norm = colors.Normalize(vmin=0, vmax=stepsize * (len(t.columns) - 1))
+    sm = plt.cm.ScalarMappable(norm=norm, cmap=cmap)
+
+    for i in range(1, len(t.columns)):
+        ax.plot((t.iloc[:, 0]) / 7, t.iloc[:, i], c=cmap(i))
+
+    ax.plot((t.iloc[:, 0]) / 7, k.iloc[:, 1],
+            label='K', c='darkorange', linewidth=2)
+    
+    cb = plt.colorbar(sm, ax=ax)
+    labels = np.arange(0, stepsize * (len(t.columns) - 1), stepsize * 2).round(3)
+    loc = labels + stepsize / 2
+    cb.set_ticks(loc)
+    cb.ax.set_yticklabels(["{:.2f}".format(i) for i in labels])
+    cb.ax.tick_params(axis='both', which='major', labelsize=20)
 
     ax.text(1.05, 1.05, r'$\lambda$' +
             ' (' + r'day$\mathregular{^{-1}}$' + ')',
             transform=ax.transAxes, fontsize=15, color='black')
 
-    ax.set_xlabel('Time on RT (week)', fontsize=20)
-    ax.set_ylabel('% Initial Tumor Volume', fontsize=20)
-    ax.tick_params(axis='both', which='major', labelsize=20, pad=10)
+    ax.set_xlabel('Time on RT (week)', fontsize=20, labelpad=10)
+    ax.set_ylabel('% Initial Tumor Volume', fontsize=20, labelpad=10)
+    ax.tick_params(axis='both', which='major', labelsize=20)
+    
     ax.set_xlim((0, 5))
     ax.set_ylim((0, 100 / start_psi + 40))
+    ax.set_title(('DVR' if x == 0 else 'CCR') + ' Model', fontsize=20, pad=7.5)
 
     xmin, xmax = ax.get_xlim()
     ymin, ymax = ax.get_ylim()
-    ax.set_aspect(xmax / ymax)
 
     ax.set_xticks(np.arange(0, xmax + 1, 1))
     ax.set_yticks(np.linspace(0, 150, 4))
+    ax.tick_params(axis='both', which='both', pad=10, width=axis_thickness)
 
     if x == 0:
         loc = [4.3, 135]
@@ -131,7 +112,8 @@ for x in range(2):
 
     for axis in ['top', 'right']:
         ax.spines[axis].set_linewidth(0)
-    ax.tick_params(width=axis_thickness)
+
+####################
 
 subax1 = inset_axes(axs[1], width=1.3, height=0.9)
 subax1.tick_params(width=axis_thickness)
@@ -159,14 +141,14 @@ for axis in ['bottom', 'left']:
 
 ax.indicate_inset_zoom(subax1, edgecolor="black", linewidth=2, alpha=0.25)
 mark_inset(ax, subax1, loc1=2, loc2=4, fc="none", ec='0.5', alpha=0.2)
-fig.set_size_inches(6.8*2, 5)
 
-fig.tight_layout()
+plt.subplots_adjust(top=0.86, bottom=0.173, left=0.107,
+                    right=0.985, hspace=0.076, wspace=0.5)
 
 current_dir = os.getcwd()
 parent_dir = os.path.abspath(os.path.join(current_dir, os.pardir))
 folder_path = os.path.join(parent_dir, 'Figures')
 os.makedirs(folder_path, exist_ok=True)
-plt.savefig(os.path.join(folder_path, "Figure_3.png"), dpi=300, bbox_inches='tight')
+plt.savefig(os.path.join(folder_path, "Figure_4.png"), bbox_inches='tight', dpi=300)
 
-plt.show()
+# plt.show()

@@ -153,8 +153,8 @@ public class Dose {
         if (!(cumul_dose == -1)) // filters LRC (8 weeks of treatment or while number of doses <= maximum dose / fraction size) and PSI exceeding one
         {
             initializePatient(fraction_size, v0, lambda, alpha, delta, data, a, k, cumul_dose);
-            if (allpts.size() % 100.0 == 0.0 && allpts.size() > 1)
-                System.out.println("Completed: " + allpts.size());
+            // if (allpts.size() % 100.0 == 0.0 && allpts.size() > 1)
+            //     System.out.println("Completed: " + allpts.size());
             allpts.add(a);
         }
     }

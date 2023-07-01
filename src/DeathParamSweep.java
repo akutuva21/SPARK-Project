@@ -5,7 +5,7 @@ public class DeathParamSweep {
         double alpha_incr, delta_incr, lambda_incr, frac_incr, psi_incr;
         String values_name, volume_name, k_name;
 
-        // Figure 2
+        // Figure 3
 
         // Panel A: DVR Sweep for Varying Alpha
 

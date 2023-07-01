@@ -1,4 +1,4 @@
-## Figure 1: Logistic Growth Model and Direct and Indirect Models
+## Figure 2: Logistic Growth Model and Direct and Indirect Models
 
 import pandas as pd
 import numpy as np
@@ -55,9 +55,6 @@ letter = ['A', 'B', 'C']
 
 for i in range(3):
     ax = axs[i]
-    logistic = False
-    direct = False
-    indirect = False
 
     t = volume[i]
     t2 = k_vals[i]
@@ -68,21 +65,19 @@ for i in range(3):
     delta = t3.iloc[:, 2]
     psi = t3.iloc[:, 3]
 
-    if i == 0:
-        logistic = True
-    if i == 1:
-        direct = True
-    if i == 2:
-        indirect = True
+    direct = True if i == 1 else False
+    indirect = True if i == 2 else False
 
-    ax.plot((t.iloc[:, 0]) / 7, t.iloc[:, 1],
+    scale = 100
+
+    ax.plot((t.iloc[:, 0]) / 7, t.iloc[:, 1] / scale,
             label=r'$V$', c='dodgerblue', linewidth=3)
 
-    ax.plot((t2.iloc[:, 0]) / 7, t2.iloc[:, 1],
+    ax.plot((t2.iloc[:, 0]) / 7, t2.iloc[:, 1] / scale,
             label=r'$K$', c='darkorange', linewidth=3)
 
     ax.set_xlim((0, 4))
-    ax.set_ylim((0, (100 / start_psi) + 5))
+    ax.set_ylim((0, ((100 / start_psi) + 5) / scale))
     ymin, ymax = ax.get_ylim()
     xmin, xmax = ax.get_xlim()
 
@@ -94,7 +89,7 @@ for i in range(3):
                   edgecolor='none', pad=0.2)  # lightgray
 
     ax.set_xticks(np.arange(0, xmax + 1, 1))
-    ax.set_yticks(np.linspace(0, 100, 3))
+    ax.set_yticks(np.linspace(0, 100, 3) / scale)
 
     if i == 0:
         x_label = 'Time'
@@ -105,19 +100,18 @@ for i in range(3):
 
     else:
         x_val = [x/7 for x in range(0, 28) if x % 7 < 5]
-        y_val = [105] * len(x_val)
+        y_val = [105/scale] * len(x_val)
         ax.scatter(x_val, y_val, marker=r'$\downarrow$', c='green',
                    s=300, linewidth=0.25, edgecolors='black', zorder=5)
 
         title = ('DVR' if direct else 'CCR') + ' Model'
         x_label = 'Time on RT (week)'
-        y_label = '% Initial Tumor Volume'
+        y_label = 'V / V$_0$'
 
         ax.tick_params(axis='both', which='major', labelsize=20)
         ax.tick_params(axis='both', which='both', pad=10, width=axis_thickness)
 
-        alpha_text = r'$\alpha=%.2f$' % (
-            alpha[x - 1]) + ' ' + '$Gy^{-1}$' if direct else ''
+        alpha_text = r'$\alpha=%.2f$' + str(alpha[x - 1]) + ' ' + '$Gy^{-1}$' if direct else ''
         delta_text = r'$\delta=%.2f$' + str(delta[x - 1]) if indirect else ''
         lambda_text = '\n' + \
             r'$\lambda=%.2f$' % (lam[x - 1]) + ' ' + '$day^{-1}$' + '\n'
@@ -142,21 +136,23 @@ for i in range(3):
     for axis in ['top', 'right']:
         ax.spines[axis].set_linewidth(0)
 
-plt.tight_layout()
-plt.subplots_adjust(top=0.8)
+title_height = (-0.15, 1.2)
+
 axs[0].set_title('Logistic Tumor Growth', fontsize=20, pad=28, fontweight='bold')
-axs[0].text(-0.15, 1.2, 'A', fontsize=30, transform=axs[0].transAxes, fontweight='bold')
+axs[0].text(*title_height, 'A', fontsize=30, transform=axs[0].transAxes, fontweight='bold')
 
 # Add a subtitle between subplots 2 and 3
 subtitle_ax = fig.add_subplot(outer_grid[:, 1:])
 subtitle_ax.set_title('RT Response Models', fontsize=20, pad=28, fontweight='bold')
-subtitle_ax.text(-0.15, 1.2, 'B', fontsize=30, transform=subtitle_ax.transAxes, fontweight='bold')
+subtitle_ax.text(*title_height, 'B', fontsize=30, transform=subtitle_ax.transAxes, fontweight='bold')
 subtitle_ax.axis('off')
+
+plt.subplots_adjust(left=0.05, bottom=0.10, right=0.985, top=0.8, wspace=0.42)
 
 current_dir = os.getcwd()
 parent_dir = os.path.abspath(os.path.join(current_dir, os.pardir))
 folder_path = os.path.join(parent_dir, 'Figures')
 os.makedirs(folder_path, exist_ok=True)
-plt.savefig(os.path.join(folder_path, "Figure_1.png"), dpi=300, bbox_inches='tight')
+plt.savefig(os.path.join(folder_path, "Figure_2.png"), bbox_inches='tight', dpi=300)
 
-plt.show()
+# plt.show()

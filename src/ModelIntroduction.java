@@ -6,7 +6,7 @@ public class ModelIntroduction {
         double alpha_incr, delta_incr, lambda_incr, frac_incr, psi_incr;
         String values_name, volume_name, k_name;
 
-        // Figure 1
+        // Figure 2
 
         // Panel A: Logistic Growth Model
 

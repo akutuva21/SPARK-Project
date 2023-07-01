@@ -21,7 +21,7 @@ if [ -f "$src_directory/ModelComparison.java" ]; then
     for arg in "$@"
     do
         case $arg in 
-            1)
+            2)
                 if [ -f "$src_directory/ModelIntroduction.java" ]; then
                     javac "$src_directory/ModelIntroduction.java"
                     java -cp . ModelIntroduction
@@ -29,10 +29,10 @@ if [ -f "$src_directory/ModelComparison.java" ]; then
                     # Run the Python file
                     if [ -f "$python_directory/Sample_Graphing.py" ]; then
                         python "$python_directory/Sample_Graphing.py"
-                        echo "Figure 1 Generated!"
+                        echo "Figure $arg Generated!"
                     elif [ -f "$python_directory/Sample_Graphing.py" ]; then
                         python3 "$python_directory/Sample_Graphing.py"
-                        echo "Figure 1 Generated!"
+                        echo "Figure $arg Generated!"
                     else
                         echo "Python file (Sample_Graphing.py) not found."
                     fi
@@ -41,7 +41,7 @@ if [ -f "$src_directory/ModelComparison.java" ]; then
                     echo "Java file (ModelIntroduction.java) not found."
                 fi
                 ;;
-            2)
+            3)
                 if [ -f "$src_directory/DeathParamSweep.java" ]; then
                     javac "$src_directory/DeathParamSweep.java"
                     java -cp . DeathParamSweep
@@ -49,10 +49,10 @@ if [ -f "$src_directory/ModelComparison.java" ]; then
                     # Run the Python file
                     if [ -f "$python_directory/Death_Sweep.py" ]; then
                         python "$python_directory/Death_Sweep.py"
-                        echo "Figure 2 Generated!"
+                        echo "Figure $arg Generated!"
                     elif [ -f "$python_directory/Death_Sweep.py" ]; then
                         python3 "$python_directory/Death_Sweep.py"
-                        echo "Figure 2 Generated!"
+                        echo "Figure $arg Generated!"
                     else
                         echo "Python file (Death_Sweep.py) not found."
                     fi
@@ -61,7 +61,7 @@ if [ -f "$src_directory/ModelComparison.java" ]; then
                     echo "Java file (DeathParamSweep.java) not found."
                 fi
                 ;;
-            3)
+            4)
                 if [ -f "$src_directory/LambdaSweep.java" ]; then
                     javac "$src_directory/LambdaSweep.java"
                     java -cp . LambdaSweep
@@ -69,10 +69,10 @@ if [ -f "$src_directory/ModelComparison.java" ]; then
                     # Run the Python file
                     if [ -f "$python_directory/Lambda_Sweep.py" ]; then
                         python "$python_directory/Lambda_Sweep.py"
-                        echo "Figure 3 Generated!"
+                        echo "Figure $arg Generated!"
                     elif [ -f "$python_directory/Lambda_Sweep.py" ]; then
                         python3 "$python_directory/Lambda_Sweep.py"
-                        echo "Figure 3 Generated!"
+                        echo "Figure $arg Generated!"
                     else
                         echo "Python file (Lambda_Sweep.py) not found."
                     fi
@@ -81,44 +81,24 @@ if [ -f "$src_directory/ModelComparison.java" ]; then
                     echo "Java file (LambdaSweep.java) not found."
                 fi
                 ;;
-            4)
-                if [ -f "$src_directory/DVR_Scatter.java" ]; then
-                    javac "$src_directory/DVR_Scatter.java"
-                    java -cp . DVR_Scatter
-
-                    # Run the Python file
-                    if [ -f "$python_directory/Death_PSI_Cumul_Graphs.py" ]; then
-                        python "$python_directory/Death_PSI_Cumul_Graphs.py" "direct"
-                        echo "Figure 4 Generated!"
-                    elif [ -f "$python_directory/Death_PSI_Cumul_Graphs.py" ]; then
-                        python3 "$python_directory/Death_PSI_Cumul_Graphs.py" "direct"
-                        echo "Figure 4 Generated!"
-                    else
-                        echo "Python file (Death_PSI_Cumul_Graphs.py) not found."
-                    fi
-
-                else
-                    echo "Java file (DVR_Scatter.java) not found."
-                fi
-                ;;
             5)
-                if [ -f "$src_directory/CCR_Scatter.java" ]; then
-                    javac "$src_directory/CCR_Scatter.java"
-                    java -cp . CCR_Scatter
+                if [ -f "$src_directory/DVR_CCR_Scatter.java" ]; then
+                    javac "$src_directory/DVR_CCR_Scatter.java"
+                    java -cp . DVR_CCR_Scatter
 
                     # Run the Python file
-                    if [ -f "$python_directory/Death_PSI_Cumul_Graphs.py" ]; then
-                        python "$python_directory/Death_PSI_Cumul_Graphs.py" "indirect"
-                        echo "Figure 5 Generated!"
-                    elif [ -f "$python_directory/Death_PSI_Cumul_Graphs.py" ]; then
-                        python3 "$python_directory/Death_PSI_Cumul_Graphs.py" "indirect"
-                        echo "Figure 5 Generated!"
+                    if [ -f "$python_directory/PSI_death_doselines.py" ]; then
+                        python "$python_directory/PSI_death_doselines.py"
+                        echo "Figure $arg Generated!"
+                    elif [ -f "$python_directory/PSI_death_doselines.py" ]; then
+                        python3 "$python_directory/PSI_death_doselines.py"
+                        echo "Figure $arg Generated!"
                     else
-                        echo "Python file (Death_PSI_Cumul_Graphs.py) not found."
+                        echo "Python file (PSI_death_doselines.py) not found."
                     fi
 
                 else
-                    echo "Java file (CCR_Scatter.java) not found."
+                    echo "Java file (DVR_CCR_Scatter.java) not found."
                 fi
                 ;;
             *)

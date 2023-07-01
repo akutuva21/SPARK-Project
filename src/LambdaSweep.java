@@ -6,7 +6,7 @@ public class LambdaSweep {
         double alpha_incr, delta_incr, lambda_incr, frac_incr, psi_incr;
         String values_name, volume_name, k_name;
 
-        // Figure 3
+        // Figure 4
 
         // Panel A: DVR Sweep for Varying Lambda
 
